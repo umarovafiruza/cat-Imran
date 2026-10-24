@@ -1291,7 +1291,7 @@ class GameEngine3D {
 
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
         this.renderer.setSize(this.width, this.height);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
         this.container.appendChild(this.renderer.domElement);
 
         // Yorug'liklar
@@ -1485,6 +1485,7 @@ class GameEngine3D {
             }
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(this.width, this.height);
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
         };
 
         window.addEventListener("resize", updateViewSize);
@@ -1603,26 +1604,31 @@ class GameEngine3D {
             });
         }
 
+        // Modal va o'yin tugmalarini xatosiz va zudlik bilan ishga tushirish (Touch & Click debounced)
+        const bindActionBtn = (btn, callback) => {
+            if (!btn) return;
+            let lastTrigger = 0;
+            const handler = (e) => {
+                const now = performance.now();
+                if (now - lastTrigger < 250) return;
+                lastTrigger = now;
+                if (e && e.cancelable && e.type === "touchend") e.preventDefault();
+                this.sound.init();
+                callback();
+            };
+            btn.addEventListener("click", handler);
+            btn.addEventListener("touchend", handler, { passive: false });
+        };
+
         if (this.ui.pauseBtn) this.ui.pauseBtn.addEventListener("click", () => this.togglePause());
 
-        if (this.ui.startHardcoreBtn) {
-            this.ui.startHardcoreBtn.addEventListener("click", () => {
-                this.sound.init();
-                this.startHardcoreGame();
-            });
-        }
-
-        if (this.ui.startBtn) {
-            this.ui.startBtn.addEventListener("click", () => {
-                this.sound.init();
-                this.startNewGame();
-            });
-        }
-        if (this.ui.resumeBtn) this.ui.resumeBtn.addEventListener("click", () => this.togglePause());
-        if (this.ui.restartFromPauseBtn) this.ui.restartFromPauseBtn.addEventListener("click", () => this.startNewGame());
-        if (this.ui.nextLevelBtn) this.ui.nextLevelBtn.addEventListener("click", () => this.startNextLevel());
-        if (this.ui.restartBtn) this.ui.restartBtn.addEventListener("click", () => this.startNewGame());
-        if (this.ui.playAgainBtn) this.ui.playAgainBtn.addEventListener("click", () => this.startNewGame());
+        bindActionBtn(this.ui.startHardcoreBtn, () => this.startHardcoreGame());
+        bindActionBtn(this.ui.startBtn, () => this.startNewGame());
+        bindActionBtn(this.ui.resumeBtn, () => this.togglePause());
+        bindActionBtn(this.ui.restartFromPauseBtn, () => this.startNewGame());
+        bindActionBtn(this.ui.nextLevelBtn, () => this.startNextLevel());
+        bindActionBtn(this.ui.restartBtn, () => this.startNewGame());
+        bindActionBtn(this.ui.playAgainBtn, () => this.startNewGame());
     }
 
     syncDrawerStats() {
@@ -1633,9 +1639,6 @@ class GameEngine3D {
         if (this.ui.drawerFpsVal) this.ui.drawerFpsVal.textContent = `${this.fps || 60} FPS`;
         const kmh = Math.round(this.player ? this.player.vs * 235 : 0);
         if (this.ui.drawerSpeedVal) this.ui.drawerSpeedVal.textContent = kmh;
-    }
-        if (this.ui.restartBtn) this.ui.restartBtn.addEventListener("click", () => this.startNewGame());
-        if (this.ui.playAgainBtn) this.ui.playAgainBtn.addEventListener("click", () => this.startNewGame());
     }
 
     // ==========================================
@@ -1824,8 +1827,8 @@ class GameEngine3D {
     buildCityDecorations() {
         const trackLen = this.track.length;
 
-        // Ko'cha chiroqlari (har 32 metrda trotuarda)
-        for (let s = 10; s < trackLen - 20; s += 32) {
+        // Ko'cha chiroqlari (har 50 metrda trotuarda - 60 FPS optimallashgan)
+        for (let s = 25; s < trackLen - 30; s += 50) {
             [-6.6, 6.6].forEach(sideD => {
                 const lamp = ModelFactory.createStreetLamp();
                 const frame = this.track.getFrame(s);
@@ -1836,43 +1839,55 @@ class GameEngine3D {
             });
         }
 
-        // Binolar va daraxtlar (har 18 metrda yo'l bo'yida)
+        // Binolar va daraxtlar (har 36 metrda yo'l bo'yida - 60 FPS optimallashgan)
         let bldgIdx = 0;
-        for (let s = 16; s < trackLen - 30; s += 18) {
-            [-11.2, 11.2].forEach(sideD => {
+        for (let s = 20; s < trackLen - 35; s += 36) {
+            [-11.5, 11.5].forEach(sideD => {
                 const bldg = ModelFactory.createBuilding(bldgIdx++);
                 const frame = this.track.getFrame(s);
                 bldg.position.copy(this.track.getPoint(s, sideD, 0));
                 const heading = Math.atan2(frame.tangent.x, frame.tangent.z);
-                // Binolar yo'lga qaragan holda perpendikulyar turadi
                 bldg.rotation.y = heading + (sideD < 0 ? Math.PI / 2 : -Math.PI / 2);
                 this.decorGroup.add(bldg);
             });
         }
     }
 
-    clearLevel() {
-        if (this.roadMesh) { this.scene.remove(this.roadMesh); this.roadMesh = null; }
-        if (this.centerStrip) { this.scene.remove(this.centerStrip); this.centerStrip = null; }
-        if (this.sidewalks) { this.scene.remove(this.sidewalks); this.sidewalks = null; }
-        if (this.groundMesh) { this.scene.remove(this.groundMesh); this.groundMesh = null; }
-        if (this.finishGate) { this.scene.remove(this.finishGate); this.finishGate = null; }
-        if (this.homeMesh) { this.scene.remove(this.homeMesh); this.homeMesh = null; }
+    disposeHierarchy(node) {
+        if (!node) return;
+        node.traverse((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+        });
+    }
 
-        this.items.forEach(it => this.scene.remove(it.mesh));
+    clearLevel() {
+        if (this.roadMesh) { this.disposeHierarchy(this.roadMesh); this.scene.remove(this.roadMesh); this.roadMesh = null; }
+        if (this.centerStrip) { this.disposeHierarchy(this.centerStrip); this.scene.remove(this.centerStrip); this.centerStrip = null; }
+        if (this.sidewalks) { this.disposeHierarchy(this.sidewalks); this.scene.remove(this.sidewalks); this.sidewalks = null; }
+        if (this.groundMesh) { this.disposeHierarchy(this.groundMesh); this.scene.remove(this.groundMesh); this.groundMesh = null; }
+        if (this.finishGate) { this.disposeHierarchy(this.finishGate); this.scene.remove(this.finishGate); this.finishGate = null; }
+        if (this.homeMesh) { this.disposeHierarchy(this.homeMesh); this.scene.remove(this.homeMesh); this.homeMesh = null; }
+
+        this.items.forEach(it => { this.disposeHierarchy(it.mesh); this.scene.remove(it.mesh); });
         this.items = [];
 
-        this.dogs.forEach(d => this.scene.remove(d.mesh));
+        this.dogs.forEach(d => { this.disposeHierarchy(d.mesh); this.scene.remove(d.mesh); });
         this.dogs = [];
 
-        this.cars.forEach(c => this.scene.remove(c.mesh));
+        this.cars.forEach(c => { this.disposeHierarchy(c.mesh); this.scene.remove(c.mesh); });
         this.cars = [];
 
-        this.puddles.forEach(p => this.scene.remove(p.mesh));
+        this.puddles.forEach(p => { this.disposeHierarchy(p.mesh); this.scene.remove(p.mesh); });
         this.puddles = [];
 
         while (this.decorGroup.children.length > 0) {
-            this.decorGroup.remove(this.decorGroup.children[0]);
+            const child = this.decorGroup.children[0];
+            this.disposeHierarchy(child);
+            this.decorGroup.remove(child);
         }
     }
 
@@ -1997,7 +2012,7 @@ class GameEngine3D {
     // HAR BIR KADRDA YANGILANISH (UPDATE - REAL FIZIKA)
     // ==========================================
     update() {
-        if (!this.track) return;
+        if (!this.track || this.state !== "PLAYING") return;
         const p = this.player;
         const cfg = LEVEL_CONFIGS[this.currentLevelIndex];
 
@@ -2158,8 +2173,8 @@ class GameEngine3D {
         this.camera.position.lerp(targetCamPos, 0.14);
         this.camera.lookAt(targetLookPos);
 
-        // Yorug'liklar ergashishi
-        if (this.catLight) this.catLight.position.copy(catWorldPos).add(new THREE.Vector3(0, 2.2, 0));
+        // Yorug'liklar ergashishi (Xotira optimallashgan, GC pause yo'q)
+        if (this.catLight) this.catLight.position.set(catWorldPos.x, catWorldPos.y + 2.2, catWorldPos.z);
         if (this.moon) this.moon.position.set(this.camera.position.x + 35, 45, this.camera.position.z - 75);
         if (this.stars) this.stars.position.set(this.camera.position.x, 0, this.camera.position.z);
 
