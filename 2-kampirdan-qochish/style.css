@@ -1,0 +1,519 @@
+/* ========================================================
+   QOCH, BOLAKAY! 3D (ASABIY KAMPIRDAN QOCHISH) - STILLAR
+   Mavzu: Yomg'irli shahar ko'chasi, asabiy kampir va komiks uslubi
+   ======================================================== */
+
+:root {
+    --rainy-sky: #1a2238;
+    --wet-asphalt: #212529;
+    --neon-orange: #ff6b35;
+    --danger-red: #ef233c;
+    --safe-green: #2ec4b6;
+    --lamp-glow: #ffbe0b;
+    --card-bg: rgba(25, 30, 45, 0.94);
+    --text-light: #f8fafc;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--rainy-sky);
+    font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
+    color: var(--text-light);
+}
+
+.comic-title {
+    font-family: 'Fredoka', 'Bangers', cursive, sans-serif;
+    letter-spacing: 1px;
+}
+
+#game-viewport {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 30%, #2b3a55 0%, #111827 100%);
+}
+
+#webgl-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#webgl-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+/* Yomg'ir qatlami (Rain Screen FX) */
+#rain-screen-fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: repeating-linear-gradient(
+        105deg,
+        rgba(255, 255, 255, 0.05) 0px,
+        rgba(255, 255, 255, 0.05) 1px,
+        transparent 1px,
+        transparent 30px
+    );
+    animation: rainFall 0.35s linear infinite;
+    opacity: 0.7;
+}
+
+@keyframes rainFall {
+    0% { background-position: 0 0; }
+    100% { background-position: -20px 100px; }
+}
+
+/* HUD (Yuqori Panellar) */
+.overlay-ui {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.hud-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hud-pill {
+    pointer-events: auto;
+    background: rgba(17, 24, 39, 0.85);
+    padding: 7px 16px;
+    border-radius: 20px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+}
+
+.hud-icon {
+    font-size: 18px;
+}
+
+/* Uyga yetish masofasi (Progress Bar) */
+.home-progress-wrap {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(17, 24, 39, 0.85);
+    padding: 6px 16px;
+    border-radius: 24px;
+    border: 2px solid rgba(255, 190, 11, 0.6);
+    box-shadow: 0 0 15px rgba(255, 190, 11, 0.3);
+}
+
+.prog-icon {
+    font-size: 20px;
+}
+
+.home-track {
+    width: 140px;
+    height: 12px;
+    background: #374151;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.home-fill-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ffbe0b, #10b981);
+    border-radius: 8px;
+    transition: width 0.2s ease-out;
+}
+
+.fps-pill {
+    background: rgba(0, 0, 0, 0.6);
+    color: #4ade80;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.hud-btn {
+    pointer-events: auto;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: rgba(17, 24, 39, 0.85);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transition: transform 0.15s, background 0.15s;
+}
+
+.hud-btn:hover {
+    transform: scale(1.08);
+    background: #1f2937;
+}
+
+/* Kampir Yaqinligi Xavf Radari (Danger Radar) */
+.danger-radar-box {
+    position: absolute;
+    top: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.9);
+    border: 3px solid var(--danger-red);
+    box-shadow: 0 8px 30px rgba(239, 35, 60, 0.5);
+    border-radius: 20px;
+    padding: 8px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 15;
+    min-width: 260px;
+    backdrop-filter: blur(8px);
+}
+
+.radar-label {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fca5a5;
+}
+
+.radar-meter-track {
+    width: 100%;
+    height: 10px;
+    background: #374151;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.danger-bar-fill {
+    height: 100%;
+    width: 20%;
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    border-radius: 6px;
+    transition: width 0.15s linear;
+}
+
+.radar-alert {
+    color: #ff4d4d;
+    font-weight: 800;
+    font-size: 12px;
+    animation: dangerPulse 0.6s infinite alternate;
+}
+
+@keyframes dangerPulse {
+    from { opacity: 0.4; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1.04); }
+}
+
+/* Ovozli Dialog Bubbles (Speech Bubbles) */
+.speech-bubble {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-weight: 800;
+    font-size: 17px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    z-index: 25;
+    animation: popBubble 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
+    pointer-events: none;
+    max-width: 90%;
+}
+
+@keyframes popBubble {
+    from { transform: translate(-50%, 20px) scale(0.8); opacity: 0; }
+    to { transform: translate(-50%, 0) scale(1); opacity: 1; }
+}
+
+.grandma-bubble {
+    top: 145px;
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    border: 3px solid #fecaca;
+}
+
+.boy-bubble {
+    bottom: 110px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    border: 3px solid #bfdbfe;
+    animation: screamShake 0.1s infinite;
+}
+
+@keyframes screamShake {
+    0% { transform: translate(-50%, 0); }
+    50% { transform: translate(-48%, -4px); }
+    100% { transform: translate(-52%, 2px); }
+}
+
+/* Modallar va Ekrani */
+.modal-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 15, 25, 0.82);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 20px;
+}
+
+.modal-screen.hidden {
+    display: none !important;
+}
+
+.modal-card {
+    background: var(--card-bg);
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    border-radius: 28px;
+    padding: 30px;
+    max-width: 520px;
+    width: 100%;
+    text-align: center;
+    animation: modalPop 0.35s ease-out;
+}
+
+.modal-card.mini {
+    max-width: 380px;
+    padding: 26px;
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.story-emojis {
+    font-size: 46px;
+    margin-bottom: 10px;
+}
+
+.game-title {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--neon-orange);
+    text-shadow: 0 4px 15px rgba(255, 107, 53, 0.5);
+    margin-bottom: 6px;
+}
+
+.game-subtitle {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 18px;
+}
+
+.story-box {
+    background: rgba(30, 41, 59, 0.7);
+    border: 2px dashed #475569;
+    border-radius: 16px;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #cbd5e1;
+    text-align: left;
+    margin-bottom: 18px;
+}
+
+.instructions-box {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 16px;
+    padding: 14px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 13px;
+    color: #e2e8f0;
+    margin-bottom: 22px;
+}
+
+.inst-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.inst-icon {
+    font-size: 17px;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: 800;
+    border: none;
+    border-radius: 18px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff6b35, #f72585);
+    color: #fff;
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.5);
+    border: 2px solid #fff;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(255, 107, 53, 0.6);
+}
+
+.action-btn:active {
+    transform: translateY(2px);
+}
+
+.alt-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    border: 2px solid #334155;
+    border-radius: 16px;
+    background: #1e293b;
+    color: #94a3b8;
+    margin-top: 10px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.danger-card {
+    border-color: var(--danger-red);
+}
+
+.danger-btn {
+    background: linear-gradient(135deg, #ef4444, #991b1b);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+}
+
+.victory-card {
+    border-color: #10b981;
+}
+
+.victory-btn {
+    background: linear-gradient(135deg, #10b981, #047857);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+}
+
+.summary-box {
+    background: rgba(30, 41, 59, 0.6);
+    padding: 14px;
+    border-radius: 16px;
+    margin: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    color: #e2e8f0;
+}
+
+.celebrate-icon {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
+
+/* Mobil Boshqaruv Tugmalari */
+#mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 30;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+    #mobile-controls {
+        display: flex;
+    }
+}
+
+.mobile-dpad, .mobile-actions {
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+    align-items: flex-end;
+}
+
+.touch-btn {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: rgba(30, 41, 59, 0.9);
+    border: 3px solid var(--neon-orange);
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.touch-btn:active {
+    transform: scale(0.92);
+    background: var(--neon-orange);
+}
+
+.slide-btn, .jump-btn, .boost-btn {
+    width: auto;
+    padding: 0 16px;
+    border-radius: 24px;
+    height: 48px;
+    font-size: 13px;
+}
+
+.jump-btn {
+    border-color: #38bdf8;
+}
+
+.boost-btn {
+    border-color: #facc15;
+}
+
+.hidden {
+    display: none !important;
+}

@@ -1,0 +1,497 @@
+/* ========================================================
+   MUSHUKCHA UYGA QAYTADI 3D - POYGA STILLARI (CSS)
+   Rejim: To'liq Ekran 3D Poyga, 60 FPS Optimallashgan
+   ======================================================== */
+
+:root {
+    --primary-sky: #0a1128;
+    --cat-orange: #ff9326;
+    --coin-gold: #ffbe0b;
+    --ui-bg: rgba(255, 255, 255, 0.94);
+    --text-dark: #2d3436;
+    --border-accent: #f39c12;
+    --neon-blue: #00d2d3;
+    --neon-red: #ff3838;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #050510;
+    font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
+}
+
+/* Butun ekran 3D maydoni */
+#game-viewport {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--primary-sky);
+}
+
+/* 3D WebGL Canvas konteyneri */
+#webgl-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: block;
+}
+
+#webgl-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+/* HUD (Yuqori Ma'lumotlar Paneli) */
+.overlay-ui {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.hud-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hud-pill {
+    background: var(--ui-bg);
+    padding: 6px 14px;
+    border-radius: 40px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    border: 2px solid #ffffff;
+}
+
+.hud-symbol {
+    font-size: 1.25rem;
+}
+
+.coin-icon {
+    display: inline-block;
+    filter: drop-shadow(0 2px 2px rgba(243, 156, 18, 0.5));
+}
+
+/* Poyga Spidometri */
+.speed-pill {
+    background: linear-gradient(135deg, #1e272e, #2f3640);
+    color: #00d2d3;
+    border-color: #00cec9;
+    box-shadow: 0 0 12px rgba(0, 210, 211, 0.4);
+    font-family: 'Courier New', monospace;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+}
+
+.speed-pill small {
+    font-size: 0.75rem;
+    color: #a4b0be;
+    margin-left: 2px;
+}
+
+.dist-pill {
+    background: rgba(255, 255, 255, 0.95);
+    color: #2f3542;
+    font-weight: 800;
+}
+
+.fps-pill {
+    background: rgba(0, 0, 0, 0.7);
+    color: #2ecc71;
+    font-family: monospace;
+    font-size: 0.92rem;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.level-badge {
+    background: linear-gradient(135deg, #ff793f, #ee5253);
+    color: #ffffff;
+    font-weight: 800;
+    padding: 7px 18px;
+    border-radius: 40px;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 12px rgba(238, 82, 83, 0.35);
+    border: 2px solid #ffffff;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+}
+
+.hardcore-badge {
+    background: linear-gradient(135deg, #eb3b5a, #fa8231);
+    box-shadow: 0 0 15px rgba(235, 59, 90, 0.6);
+    animation: pulse-glow 1.5s infinite alternate;
+}
+
+.shield-indicator {
+    background: linear-gradient(135deg, #f1c40f, #e67e22);
+    color: #2d3436;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 12px rgba(241, 196, 15, 0.7);
+}
+
+.shield-indicator.hidden {
+    display: none;
+}
+
+.hud-btn {
+    pointer-events: auto;
+    background: var(--ui-bg);
+    border: 2px solid #ffffff;
+    font-size: 1.2rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.1s ease;
+}
+
+.hud-btn:active {
+    transform: scale(0.92);
+}
+
+/* Modal Ekranlar */
+.modal-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 15, 29, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    padding: 16px;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.modal-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: 28px;
+    padding: 26px 34px;
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+    border: 4px solid #fff;
+}
+
+.racing-modal {
+    border: 4px solid #ff4757;
+    box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
+}
+
+.modal-card.mini {
+    max-width: 360px;
+    padding: 24px;
+}
+
+.mascot-cat, .celebrate-icon {
+    font-size: 3.8rem;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.game-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #ff4757;
+    margin-bottom: 4px;
+}
+
+.racing-title {
+    background: linear-gradient(135deg, #ff4757, #ffa502);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+
+.game-subtitle {
+    color: #57606f;
+    font-size: 1.02rem;
+    margin-bottom: 16px;
+}
+
+.instructions-box {
+    background: #f1f2f6;
+    border-radius: 16px;
+    padding: 14px 18px;
+    text-align: left;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #2f3542;
+}
+
+.inst-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.inst-icon {
+    font-size: 1.35rem;
+    min-width: 26px;
+    text-align: center;
+}
+
+.menu-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.summary-box {
+    background: #fef9e7;
+    border: 2px dashed #f39c12;
+    border-radius: 16px;
+    padding: 14px;
+    margin: 16px 0 20px;
+    font-size: 1.15rem;
+    color: #d35400;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.summary-box.gold-border {
+    border-color: #f1c40f;
+    background: #fffdf0;
+}
+
+/* Tugmalar */
+.action-btn {
+    width: 100%;
+    padding: 15px 24px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-family: inherit;
+    border-radius: 40px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff9f43, #ee5253);
+    color: white;
+    box-shadow: 0 6px 0 #c0392b;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.hardcore-btn {
+    background: linear-gradient(135deg, #eb3b5a, #fa8231);
+    box-shadow: 0 6px 0 #b33939;
+    font-size: 1.3rem;
+    letter-spacing: 0.5px;
+}
+
+.secondary-start-btn {
+    background: linear-gradient(135deg, #2ed573, #1e90ff);
+    box-shadow: 0 5px 0 #1b73cb;
+    font-size: 1.1rem;
+    padding: 12px 20px;
+}
+
+.pulse-glow {
+    animation: pulse-glow 1.2s infinite alternate;
+}
+
+@keyframes pulse-glow {
+    0% { transform: scale(1); box-shadow: 0 6px 0 #b33939, 0 0 10px rgba(235, 59, 90, 0.4); }
+    100% { transform: scale(1.02); box-shadow: 0 6px 0 #b33939, 0 0 25px rgba(235, 59, 90, 0.85); }
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.action-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #c0392b;
+}
+
+.alt-btn {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 40px;
+    border: 2px solid #ced6e0;
+    background: #f1f2f6;
+    color: #57606f;
+    cursor: pointer;
+}
+
+.btn-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.victory-btn {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    box-shadow: 0 6px 0 #1e8449;
+}
+
+.danger-card h2 {
+    color: #e74c3c;
+}
+
+.danger-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 6px 0 #962d22;
+}
+
+.gold-btn {
+    background: linear-gradient(135deg, #f1c40f, #e67e22);
+    box-shadow: 0 6px 0 #b7950b;
+}
+
+/* Mobil Sensor Tugmalari - Poyga Boshqaruvi */
+#mobile-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 14px;
+    right: 14px;
+    display: none;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    z-index: 25;
+}
+
+.mobile-dpad, .mobile-actions {
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.touch-btn {
+    background: rgba(255, 255, 255, 0.88);
+    border: 3px solid #ffffff;
+    height: 64px;
+    border-radius: 35px;
+    padding: 0 16px;
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #2d3436;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    touch-action: manipulation;
+}
+
+.touch-btn:active, .touch-btn.active {
+    background: #ff4757;
+    color: #ffffff;
+    transform: scale(0.92);
+}
+
+.nitro-btn {
+    background: linear-gradient(135deg, #00cec9, #0984e3);
+    color: white;
+    border-color: #74b9ff;
+    width: 95px;
+}
+
+.brake-btn {
+    background: rgba(255, 255, 255, 0.85);
+    color: #e74c3c;
+    border-color: #ff7675;
+}
+
+.jump-btn {
+    width: 105px;
+    background: rgba(255, 234, 167, 0.95);
+    border-color: #ffd32a;
+    color: #d35400;
+}
+
+/* Mobil va Kichik Ekranlar */
+@media (max-width: 768px), (pointer: coarse) {
+    #mobile-controls {
+        display: flex;
+    }
+
+    .desktop-only {
+        display: none !important;
+    }
+
+    .hud-pill {
+        padding: 4px 10px;
+        font-size: 0.88rem;
+    }
+
+    .speed-pill {
+        font-size: 0.95rem;
+    }
+
+    .level-badge {
+        font-size: 0.82rem;
+        padding: 5px 12px;
+    }
+
+    .hud-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1.05rem;
+    }
+
+    .game-title {
+        font-size: 1.7rem;
+    }
+
+    .modal-card {
+        padding: 20px 22px;
+    }
+
+    .touch-btn {
+        height: 56px;
+        font-size: 0.98rem;
+        padding: 0 12px;
+    }
+}

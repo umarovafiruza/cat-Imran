@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mushukcha Uyga Qaytadi 3D | Egri Ko'chalar & Real Fizika</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Asosiy 3D Ko'rinish Konteyneri -->
+    <div id="game-viewport">
+        <!-- 3D WebGL Canvas konteyneri -->
+        <div id="webgl-container"></div>
+
+        <!-- Yuqori panel: HUD (Heads Up Display) -->
+        <header id="hud" class="overlay-ui">
+            <div class="hud-group hud-left">
+                <div class="hud-pill lives-pill" title="Jonlar">
+                    <span id="lives-display">❤️❤️❤️</span>
+                </div>
+                <div class="hud-pill coins-pill" title="Tangalar">
+                    <span class="hud-symbol coin-icon">🪙</span>
+                    <span id="coin-display">0</span>
+                </div>
+                <div class="hud-pill score-pill" title="Ball">
+                    <span class="hud-symbol">⭐</span>
+                    <span id="score-display">0</span>
+                    <small class="desktop-only" style="opacity:0.7;font-size:0.75rem;margin-left:4px;">(Rekord: <span id="high-score-display">0</span>)</small>
+                </div>
+                <!-- Poyga Spidometri -->
+                <div class="hud-pill speed-pill" title="Tezlik">
+                    <span class="hud-symbol">⚡</span>
+                    <span id="speed-val">90</span> <small>km/h</small>
+                </div>
+            </div>
+
+            <div class="hud-group hud-center">
+                <div id="level-badge" class="level-badge hardcore-badge">🏁 POYGA: ENG QIYIN BOSQICH</div>
+                <div id="dist-pill" class="hud-pill dist-pill" title="Masofa">
+                    <span>🛣️ </span><span id="dist-val">0</span> / <span id="dist-total">700</span>m
+                </div>
+                <div id="shield-indicator" class="shield-indicator hidden">
+                    <span class="shield-pulse">🛡️</span>
+                    <span id="shield-timer">5s</span>
+                </div>
+            </div>
+
+            <div class="hud-group hud-right">
+                <div id="fps-counter" class="fps-pill" title="FPS">60 FPS</div>
+                <button id="sound-btn" class="hud-btn" aria-label="Ovoz">🔊</button>
+                <button id="pause-btn" class="hud-btn" aria-label="Pauza">⏸️</button>
+            </div>
+        </header>
+
+        <!-- Bosh Menyu Ekrani -->
+        <div id="menu-screen" class="modal-screen">
+            <div class="modal-card racing-modal">
+                <div class="mascot-cat">🐱🏎️</div>
+                <h1 class="game-title racing-title">Mushukcha Uyga Qaytadi 3D</h1>
+                <p class="game-subtitle">O'ng va chapga buriluvchi egri ko'chalar, real fizika va tartibli shahar trassasi!</p>
+                
+                <div class="instructions-box">
+                    <div class="inst-item">
+                        <span class="inst-icon">🛣️</span>
+                        <span><b>Egri Ko'chalar:</b> O'ngga va chapga buriladigan haqiqiy 3D shahar yo'llari!</span>
+                    </div>
+                    <div class="inst-item">
+                        <span class="inst-icon">🐾</span>
+                        <span><b>Mushukcha Fizikasi:</b> Inersiya, burilish burchagi (tilt), sakrash va yumshoq qo'nish!</span>
+                    </div>
+                    <div class="inst-item">
+                        <span class="inst-icon">🕹️</span>
+                        <span><b>Boshqaruv:</b> <b>A / D</b> (burilish), <b>W</b> (gaz / nitro), <b>S</b> (tormoz), <b>Space</b> (sakrash).</span>
+                    </div>
+                    <div class="inst-item">
+                        <span class="inst-icon">🚗</span>
+                        <span><b>Trassa Harakati:</b> Tartibli va o'lchovli transport oqimi, xavfli mashinalardan qoching!</span>
+                    </div>
+                </div>
+
+                <div class="menu-btn-group">
+                    <button id="start-hardcore-btn" class="action-btn hardcore-btn pulse-glow">
+                        🏁 POYGA: ENG QIYIN BOSQICH (START) ⚡
+                    </button>
+                    <button id="start-btn" class="action-btn secondary-start-btn">
+                        🎮 Boshidan Boshlash (1-bosqich)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pauza Ekrani -->
+        <div id="pause-screen" class="modal-screen hidden">
+            <div class="modal-card mini">
+                <h2>Poyga To'xtatildi ⏸️</h2>
+                <p>Nafas rostlang va manyovrga tayyorlaning</p>
+                <div class="btn-stack">
+                    <button id="resume-btn" class="action-btn">Davom etish ▶️</button>
+                    <button id="restart-from-pause-btn" class="alt-btn">Qayta boshlash 🔄</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bosqichni Yutish Ekrani -->
+        <div id="level-complete-screen" class="modal-screen hidden">
+            <div class="modal-card">
+                <div class="celebrate-icon">🏆</div>
+                <h2 id="level-complete-title">Poyga Zabt Etildi!</h2>
+                <p id="level-complete-msg">Mushukcha eng qiyin tirbandlikdan o'tib uyga yetib bordi!</p>
+                <div class="summary-box">
+                    <div>Bosqich: <b id="completed-level-badge">Eng Qiyin Poyga</b></div>
+                    <div>Jami tangalar: <b id="level-coins-val">0</b> 🪙</div>
+                    <div>Jami ball: <b id="level-score-val">0</b> ⭐</div>
+                </div>
+                <button id="next-level-btn" class="action-btn victory-btn">Keyingi Bosqich ⏩</button>
+            </div>
+        </div>
+
+        <!-- O'yin Tugadi (Game Over) Ekrani -->
+        <div id="game-over-screen" class="modal-screen hidden">
+            <div class="modal-card danger-card">
+                <div class="celebrate-icon">💥</div>
+                <h2>To'qnashuv! O'yin Tugadi</h2>
+                <p>Katta tezlikda mashinaga duch kelindi...</p>
+                <div class="summary-box">
+                    <div>Bosqich: <b id="gameover-level-val">1</b> / 10</div>
+                    <div>Bosib o'tildi: <b id="gameover-dist-val">0</b> metr</div>
+                    <div>To'plangan ball: <b id="final-score-val">0</b></div>
+                    <div>Eng yuqori rekord: <b id="final-best-val">0</b></div>
+                </div>
+                <button id="restart-btn" class="action-btn danger-btn">Qayta Poyga 🔄</button>
+            </div>
+        </div>
+
+        <!-- G'alaba Ekrani -->
+        <div id="victory-screen" class="modal-screen hidden">
+            <div class="modal-card victory-card">
+                <div class="celebrate-icon">🏆🏎️</div>
+                <h2>MUSHUKCHA — POYGA CHEMPIONI!</h2>
+                <p>Siz eng qiyin 5 polosali trassani to'liq bosib o'tdingiz va mushukchani uyiga xavfsiz olib keldingiz!</p>
+                <div class="summary-box gold-border">
+                    <div>Jami Tangalar: <b id="victory-coins-val">0</b> 🪙</div>
+                    <div>Yakuniy Ball: <b id="victory-score-val">0</b> ⭐</div>
+                    <div>Rekord Natija: <b id="victory-best-val">0</b> 🏆</div>
+                </div>
+                <button id="play-again-btn" class="action-btn gold-btn">Yana Poyga O'ynash 🎮</button>
+            </div>
+        </div>
+
+        <!-- Mobil Qurilmalar uchun Sensor Poyga Tugmalari -->
+        <div id="mobile-controls">
+            <div class="mobile-dpad">
+                <button id="touch-left" class="touch-btn" aria-label="Chapga">◀ CHAP</button>
+                <button id="touch-right" class="touch-btn" aria-label="O'ngga">O'NG ▶</button>
+            </div>
+            <div class="mobile-actions">
+                <button id="touch-brake" class="touch-btn brake-btn" aria-label="Tormoz">TORMOZ</button>
+                <button id="touch-forward" class="touch-btn nitro-btn" aria-label="Gaz">⚡ NITRO</button>
+                <button id="touch-jump" class="touch-btn jump-btn" aria-label="Sakrash">SAKRASH</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oflayn Three.js kutubxonasi va O'yin Skripti -->
+    <script src="three.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
