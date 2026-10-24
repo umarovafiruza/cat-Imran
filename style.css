@@ -1,6 +1,7 @@
 /* ========================================================
    MUSHUKCHA UYGA QAYTADI 3D - POYGA STILLARI (CSS)
    Rejim: To'liq Ekran 3D Poyga, 60 FPS Optimallashgan
+   Mobile First & Desktop Adaptive Responsive Architecture
    ======================================================== */
 
 :root {
@@ -26,9 +27,14 @@
 html, body {
     width: 100%;
     height: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: -webkit-fill-available;
     overflow: hidden;
     background-color: #050510;
     font-family: 'Fredoka', 'Comic Sans MS', sans-serif;
+    touch-action: none;
+    overscroll-behavior: none;
 }
 
 /* Butun ekran 3D maydoni */
@@ -36,8 +42,11 @@ html, body {
     position: relative;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     background: var(--primary-sky);
+    touch-action: none;
+    overscroll-behavior: none;
 }
 
 /* 3D WebGL Canvas konteyneri */
@@ -48,49 +57,62 @@ html, body {
     height: 100%;
     overflow: hidden;
     display: block;
+    touch-action: none;
 }
 
 #webgl-container canvas {
     width: 100% !important;
     height: 100% !important;
     display: block;
+    touch-action: none;
 }
 
-/* HUD (Yuqori Ma'lumotlar Paneli) */
+/* ========================================================
+   HUD (Yuqori Ma'lumotlar Paneli)
+   ======================================================== */
 .overlay-ui {
     position: absolute;
-    top: 14px;
-    left: 16px;
-    right: 16px;
+    top: max(10px, env(safe-area-inset-top, 10px));
+    left: max(10px, env(safe-area-inset-left, 10px));
+    right: max(10px, env(safe-area-inset-right, 10px));
     display: flex;
     justify-content: space-between;
     align-items: center;
     pointer-events: none;
     z-index: 20;
+    gap: 8px;
 }
 
 .hud-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.hud-center {
+    flex-shrink: 1;
+    justify-content: center;
 }
 
 .hud-pill {
     background: var(--ui-bg);
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 40px;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     color: var(--text-dark);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     border: 2px solid #ffffff;
+    white-space: nowrap;
 }
 
 .hud-symbol {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
+    line-height: 1;
 }
 
 .coin-icon {
@@ -105,12 +127,12 @@ html, body {
     border-color: #00cec9;
     box-shadow: 0 0 12px rgba(0, 210, 211, 0.4);
     font-family: 'Courier New', monospace;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     letter-spacing: 0.5px;
 }
 
 .speed-pill small {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: #a4b0be;
     margin-left: 2px;
 }
@@ -119,15 +141,22 @@ html, body {
     background: rgba(255, 255, 255, 0.95);
     color: #2f3542;
     font-weight: 800;
+    font-size: 0.92rem;
+    padding: 5px 10px;
+}
+
+.dist-slash {
+    opacity: 0.5;
+    margin: 0 1px;
 }
 
 .fps-pill {
     background: rgba(0, 0, 0, 0.7);
     color: #2ecc71;
     font-family: monospace;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: bold;
-    padding: 6px 12px;
+    padding: 5px 10px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.25);
 }
@@ -136,13 +165,14 @@ html, body {
     background: linear-gradient(135deg, #ff793f, #ee5253);
     color: #ffffff;
     font-weight: 800;
-    padding: 7px 18px;
+    padding: 6px 14px;
     border-radius: 40px;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     box-shadow: 0 4px 12px rgba(238, 82, 83, 0.35);
     border: 2px solid #ffffff;
     letter-spacing: 0.5px;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+    white-space: nowrap;
 }
 
 .hardcore-badge {
@@ -155,50 +185,217 @@ html, body {
     background: linear-gradient(135deg, #f1c40f, #e67e22);
     color: #2d3436;
     font-weight: 700;
-    padding: 6px 14px;
+    padding: 5px 11px;
     border-radius: 40px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     border: 2px solid #ffffff;
     box-shadow: 0 0 12px rgba(241, 196, 15, 0.7);
+    font-size: 0.88rem;
+    white-space: nowrap;
 }
 
 .shield-indicator.hidden {
-    display: none;
+    display: none !important;
 }
 
 .hud-btn {
     pointer-events: auto;
     background: var(--ui-bg);
     border: 2px solid #ffffff;
-    font-size: 1.2rem;
-    width: 44px;
-    height: 44px;
+    font-size: 1.15rem;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: transform 0.1s ease;
+    transition: transform 0.1s ease, background 0.15s ease;
+    touch-action: manipulation;
 }
 
 .hud-btn:active {
-    transform: scale(0.92);
+    transform: scale(0.90);
+    background: #e2e8f0;
 }
 
-/* Modal Ekranlar */
+.burger-btn {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #1e293b;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+}
+
+.mobile-only {
+    display: none;
+}
+
+/* ========================================================
+   BURGER DRAWER (Mobil Sozlamalar & Qo'shimcha Ma'lumot)
+   ======================================================== */
+.burger-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.burger-drawer.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.drawer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 10, 25, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.drawer-card {
+    position: relative;
+    z-index: 85;
+    background: #1e293b;
+    color: #f8fafc;
+    width: min(340px, 88vw);
+    max-height: calc(100dvh - 30px);
+    overflow-y: auto;
+    border-radius: 24px;
+    margin: max(12px, env(safe-area-inset-top, 12px)) max(12px, env(safe-area-inset-right, 12px)) 0 0;
+    padding: 18px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+.drawer-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.drawer-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #f1f5f9;
+    font-size: 1.1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drawer-close-btn:active {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.drawer-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.drawer-stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.drawer-stat-label {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.drawer-stat-value {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.drawer-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.drawer-btn {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.07);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s;
+    touch-action: manipulation;
+}
+
+.drawer-btn:active {
+    background: rgba(255, 255, 255, 0.18);
+    transform: scale(0.98);
+}
+
+.danger-drawer-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+
+.danger-drawer-btn:active {
+    background: rgba(239, 68, 68, 0.4);
+}
+
+/* ========================================================
+   MODAL EKRANLAR (POP-UPLAR - SCROLL BO'LADIGAN VA COMPACT)
+   ======================================================== */
 .modal-screen {
     position: absolute;
     inset: 0;
-    background: rgba(10, 15, 29, 0.75);
+    background: rgba(10, 15, 29, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 50;
-    padding: 16px;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    z-index: 60;
+    padding: max(10px, env(safe-area-inset-top, 10px)) max(12px, env(safe-area-inset-right, 12px)) max(14px, env(safe-area-inset-bottom, 14px)) max(12px, env(safe-area-inset-left, 12px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
 }
 
 .modal-screen.hidden {
@@ -209,36 +406,50 @@ html, body {
 
 .modal-card {
     background: #ffffff;
-    border-radius: 28px;
-    padding: 26px 34px;
+    border-radius: 26px;
+    padding: 22px 24px;
     width: 100%;
     max-width: 480px;
+    max-height: calc(100dvh - max(26px, env(safe-area-inset-top, 10px) + env(safe-area-inset-bottom, 14px)));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    margin: auto; /* Avtomatik vertikal markazlashtiradi va scroll bo'lganda yuqori/pastki qirqilmaydi */
     text-align: center;
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
-    border: 4px solid #fff;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+    border: 3px solid #ffffff;
+    display: flex;
+    flex-direction: column;
 }
 
 .racing-modal {
-    border: 4px solid #ff4757;
+    border: 3.5px solid #ff4757;
     box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
 }
 
 .modal-card.mini {
     max-width: 360px;
-    padding: 24px;
+    padding: 22px;
+}
+
+.modal-header-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .mascot-cat, .celebrate-icon {
-    font-size: 3.8rem;
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .game-title {
-    font-size: 2.2rem;
+    font-size: clamp(1.4rem, 4.8vw, 2.1rem);
     font-weight: 800;
     color: #ff4757;
     margin-bottom: 4px;
+    line-height: 1.15;
 }
 
 .racing-title {
@@ -249,53 +460,58 @@ html, body {
 }
 
 .game-subtitle {
-    color: #57606f;
-    font-size: 1.02rem;
-    margin-bottom: 16px;
+    color: #636e72;
+    font-size: clamp(0.85rem, 2.8vw, 0.98rem);
+    margin-bottom: 12px;
 }
 
 .instructions-box {
     background: #f1f2f6;
     border-radius: 16px;
-    padding: 14px 18px;
+    padding: 12px 14px;
     text-align: left;
-    margin-bottom: 20px;
-    font-size: 0.95rem;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    margin-bottom: 14px;
     color: #2f3542;
+    border: 1px solid #dfe4ea;
+}
+
+.inst-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    font-size: 0.88rem;
 }
 
 .inst-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .inst-icon {
-    font-size: 1.35rem;
-    min-width: 26px;
+    font-size: 1.25rem;
+    min-width: 24px;
     text-align: center;
 }
 
 .menu-btn-group {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    margin-top: 4px;
 }
 
 .summary-box {
     background: #fef9e7;
     border: 2px dashed #f39c12;
     border-radius: 16px;
-    padding: 14px;
-    margin: 16px 0 20px;
-    font-size: 1.15rem;
+    padding: 12px 14px;
+    margin: 12px 0 16px;
+    font-size: 1.05rem;
     color: #d35400;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .summary-box.gold-border {
@@ -306,31 +522,31 @@ html, body {
 /* Tugmalar */
 .action-btn {
     width: 100%;
-    padding: 15px 24px;
-    font-size: 1.25rem;
+    padding: 13px 20px;
+    font-size: clamp(1rem, 3.8vw, 1.2rem);
     font-weight: 800;
     font-family: inherit;
-    border-radius: 40px;
+    border-radius: 36px;
     border: none;
     cursor: pointer;
     background: linear-gradient(135deg, #ff9f43, #ee5253);
     color: white;
-    box-shadow: 0 6px 0 #c0392b;
+    box-shadow: 0 5px 0 #c0392b;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
+    touch-action: manipulation;
 }
 
 .hardcore-btn {
     background: linear-gradient(135deg, #eb3b5a, #fa8231);
-    box-shadow: 0 6px 0 #b33939;
-    font-size: 1.3rem;
+    box-shadow: 0 5px 0 #b33939;
     letter-spacing: 0.5px;
 }
 
 .secondary-start-btn {
     background: linear-gradient(135deg, #2ed573, #1e90ff);
-    box-shadow: 0 5px 0 #1b73cb;
-    font-size: 1.1rem;
-    padding: 12px 20px;
+    box-shadow: 0 4px 0 #1b73cb;
+    font-size: clamp(0.92rem, 3.2vw, 1.05rem);
+    padding: 10px 16px;
 }
 
 .pulse-glow {
@@ -338,8 +554,8 @@ html, body {
 }
 
 @keyframes pulse-glow {
-    0% { transform: scale(1); box-shadow: 0 6px 0 #b33939, 0 0 10px rgba(235, 59, 90, 0.4); }
-    100% { transform: scale(1.02); box-shadow: 0 6px 0 #b33939, 0 0 25px rgba(235, 59, 90, 0.85); }
+    0% { transform: scale(1); box-shadow: 0 5px 0 #b33939, 0 0 8px rgba(235, 59, 90, 0.4); }
+    100% { transform: scale(1.015); box-shadow: 0 5px 0 #b33939, 0 0 20px rgba(235, 59, 90, 0.85); }
 }
 
 .action-btn:hover {
@@ -347,151 +563,409 @@ html, body {
 }
 
 .action-btn:active {
-    transform: translateY(4px);
+    transform: translateY(3px);
     box-shadow: 0 2px 0 #c0392b;
 }
 
 .alt-btn {
     width: 100%;
-    padding: 12px 20px;
-    font-size: 1.05rem;
+    padding: 11px 18px;
+    font-size: 0.98rem;
     font-weight: 600;
     font-family: inherit;
-    border-radius: 40px;
+    border-radius: 36px;
     border: 2px solid #ced6e0;
     background: #f1f2f6;
     color: #57606f;
     cursor: pointer;
+    touch-action: manipulation;
 }
 
 .btn-stack {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 18px;
+    gap: 10px;
+    margin-top: 14px;
 }
 
 .victory-btn {
     background: linear-gradient(135deg, #2ecc71, #27ae60);
-    box-shadow: 0 6px 0 #1e8449;
+    box-shadow: 0 5px 0 #1e8449;
 }
 
 .danger-card h2 {
     color: #e74c3c;
+    font-size: 1.5rem;
 }
 
 .danger-btn {
     background: linear-gradient(135deg, #e74c3c, #c0392b);
-    box-shadow: 0 6px 0 #962d22;
+    box-shadow: 0 5px 0 #962d22;
 }
 
 .gold-btn {
     background: linear-gradient(135deg, #f1c40f, #e67e22);
-    box-shadow: 0 6px 0 #b7950b;
+    box-shadow: 0 5px 0 #b7950b;
 }
 
-/* Mobil Sensor Tugmalari - Poyga Boshqaruvi */
+/* ========================================================
+   MOBIL SENSOR TUGMALARI (ERGONOMIC 2-THUMB GAMEPAD)
+   ======================================================== */
 #mobile-controls {
     position: absolute;
-    bottom: 16px;
-    left: 14px;
-    right: 14px;
+    bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    left: max(10px, env(safe-area-inset-left, 10px));
+    right: max(10px, env(safe-area-inset-right, 10px));
     display: none;
     justify-content: space-between;
     align-items: flex-end;
     pointer-events: none;
-    z-index: 25;
+    z-index: 45;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
-.mobile-dpad, .mobile-actions {
+/* O'yin o'ynalmaganda (menyu yoki modal ochiqligida) sensor tugmalarni yashirish */
+#menu-screen:not(.hidden) ~ #mobile-controls,
+#pause-screen:not(.hidden) ~ #mobile-controls,
+#level-complete-screen:not(.hidden) ~ #mobile-controls,
+#game-over-screen:not(.hidden) ~ #mobile-controls,
+#victory-screen:not(.hidden) ~ #mobile-controls,
+.burger-drawer:not(.hidden) ~ #mobile-controls {
+    display: none !important;
+}
+
+.mobile-dpad {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     pointer-events: auto;
+    touch-action: none;
 }
 
-.touch-btn {
-    background: rgba(255, 255, 255, 0.88);
-    border: 3px solid #ffffff;
-    height: 64px;
-    border-radius: 35px;
-    padding: 0 16px;
-    font-size: 1.15rem;
-    font-weight: 900;
-    color: #2d3436;
+.mobile-actions {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+.action-top-row {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.action-bottom-row {
+    display: flex;
+    gap: 8px;
+}
+
+/* Asosiy sensor tugma dizayni */
+.touch-btn {
+    background: rgba(255, 255, 255, 0.92);
+    border: 2.5px solid #ffffff;
+    border-radius: 18px;
+    color: #1e293b;
+    font-weight: 800;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-    touch-action: manipulation;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    touch-action: none;
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.08s ease, box-shadow 0.08s ease;
 }
 
-.touch-btn:active, .touch-btn.active {
-    background: #ff4757;
-    color: #ffffff;
+.touch-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.touch-label {
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    margin-top: 1px;
+    pointer-events: none;
+}
+
+/* Chap-O'ng Burilish Tugmalari */
+.steer-btn {
+    width: 58px;
+    height: 58px;
+    background: rgba(255, 255, 255, 0.93);
+    border-color: #ffffff;
+}
+
+.steer-btn:active, .steer-btn.active {
+    background: #00d2d3 !important;
+    color: #ffffff !important;
+    border-color: #a5f3fc !important;
     transform: scale(0.92);
+    box-shadow: 0 0 16px rgba(0, 210, 211, 0.8) !important;
 }
 
-.nitro-btn {
-    background: linear-gradient(135deg, #00cec9, #0984e3);
-    color: white;
-    border-color: #74b9ff;
-    width: 95px;
-}
-
-.brake-btn {
-    background: rgba(255, 255, 255, 0.85);
-    color: #e74c3c;
-    border-color: #ff7675;
-}
-
+/* Sakrash Tugmasi */
 .jump-btn {
-    width: 105px;
-    background: rgba(255, 234, 167, 0.95);
-    border-color: #ffd32a;
-    color: #d35400;
+    width: 136px;
+    height: 44px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ffd32a, #ff9f43);
+    border-color: #ffffff;
+    color: #2d3436;
+    flex-direction: row;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(255, 159, 67, 0.45);
 }
 
-/* Mobil va Kichik Ekranlar */
-@media (max-width: 768px), (pointer: coarse) {
+.jump-btn .touch-icon {
+    font-size: 1.15rem;
+}
+
+.jump-btn .touch-label {
+    font-size: 0.78rem;
+    margin-top: 0;
+}
+
+.jump-btn:active, .jump-btn.active {
+    background: #e67e22 !important;
+    color: #ffffff !important;
+    transform: scale(0.92);
+    box-shadow: 0 0 18px rgba(230, 126, 34, 0.8) !important;
+}
+
+/* Tormoz Tugmasi */
+.brake-btn {
+    width: 60px;
+    height: 52px;
+    background: rgba(255, 255, 255, 0.92);
+    border-color: #ff7675;
+    color: #d63031;
+}
+
+.brake-btn:active, .brake-btn.active {
+    background: #ff3838 !important;
+    color: #ffffff !important;
+    border-color: #ff7675 !important;
+    transform: scale(0.92);
+    box-shadow: 0 0 16px rgba(255, 56, 56, 0.8) !important;
+}
+
+/* Nitro / Gaz Tugmasi */
+.nitro-btn {
+    width: 76px;
+    height: 52px;
+    background: linear-gradient(135deg, #00cec9, #0984e3);
+    border-color: #74b9ff;
+    color: #ffffff;
+}
+
+.nitro-btn:active, .nitro-btn.active {
+    background: #0984e3 !important;
+    border-color: #00cec9 !important;
+    transform: scale(0.92);
+    box-shadow: 0 0 18px rgba(9, 132, 227, 0.9) !important;
+}
+
+/* ========================================================
+   RESPONSIVE (MOBIL TELEFON & PLANSHEtLAR)
+   ======================================================== */
+
+/* Har qanday sensor ekran yoki kengligi 1024px dan kichik qurilmalar */
+@media (max-width: 1024px), (max-height: 520px), (pointer: coarse) {
     #mobile-controls {
         display: flex;
     }
+}
 
+/* Telefon ekranlari (<= 768px) */
+@media (max-width: 768px) {
     .desktop-only {
         display: none !important;
     }
 
+    .mobile-only {
+        display: flex !important;
+    }
+
+    .overlay-ui {
+        top: max(8px, env(safe-area-inset-top, 8px));
+        left: max(8px, env(safe-area-inset-left, 8px));
+        right: max(8px, env(safe-area-inset-right, 8px));
+    }
+
     .hud-pill {
-        padding: 4px 10px;
-        font-size: 0.88rem;
+        padding: 4px 9px;
+        font-size: 0.84rem;
+        border-radius: 20px;
     }
 
-    .speed-pill {
-        font-size: 0.95rem;
-    }
-
-    .level-badge {
-        font-size: 0.82rem;
-        padding: 5px 12px;
-    }
-
-    .hud-btn {
-        width: 38px;
-        height: 38px;
+    .hud-symbol {
         font-size: 1.05rem;
     }
 
-    .game-title {
-        font-size: 1.7rem;
+    .hud-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1.05rem;
     }
 
     .modal-card {
-        padding: 20px 22px;
+        padding: 16px 18px;
+        border-radius: 22px;
     }
 
-    .touch-btn {
-        height: 56px;
-        font-size: 0.98rem;
-        padding: 0 12px;
+    .inst-grid {
+        font-size: 0.82rem;
+        gap: 6px;
+    }
+
+    .action-btn {
+        padding: 12px 16px;
+    }
+}
+
+/* Kichik ekranli telefonlar (<= 380px kenglik) */
+@media (max-width: 380px) {
+    .steer-btn {
+        width: 52px;
+        height: 52px;
+    }
+    .steer-btn .touch-icon {
+        font-size: 1.1rem;
+    }
+    .jump-btn {
+        width: 120px;
+        height: 40px;
+    }
+    .brake-btn {
+        width: 52px;
+        height: 48px;
+    }
+    .nitro-btn {
+        width: 66px;
+        height: 48px;
+    }
+    .hud-pill {
+        padding: 3px 7px;
+        font-size: 0.78rem;
+    }
+}
+
+/* ========================================================
+   GORIZONTAL (LANDSCAPE) ORIENTATSIYA UCHUN MAXSUS MOSLASHUV
+   ======================================================== */
+@media (orientation: landscape) and (max-height: 550px) {
+    .overlay-ui {
+        top: max(4px, env(safe-area-inset-top, 4px));
+        left: max(10px, env(safe-area-inset-left, 10px));
+        right: max(10px, env(safe-area-inset-right, 10px));
+    }
+
+    .hud-pill {
+        padding: 3px 8px;
+        font-size: 0.8rem;
+    }
+
+    .hud-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.95rem;
+    }
+
+    /* Gorizontal rejimda modal pop-uplarni ixcham qilish */
+    .modal-card {
+        max-width: 580px;
+        padding: 14px 18px;
+        max-height: calc(100dvh - max(16px, env(safe-area-inset-top, 6px) + env(safe-area-inset-bottom, 8px)));
+    }
+
+    .racing-modal {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr;
+        column-gap: 16px;
+        text-align: left;
+    }
+
+    .modal-header-compact {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .mascot-cat {
+        font-size: 2.2rem;
+        margin-bottom: 2px;
+    }
+
+    .game-title {
+        font-size: 1.25rem;
+        margin-bottom: 2px;
+    }
+
+    .game-subtitle {
+        font-size: 0.78rem;
+        margin-bottom: 6px;
+    }
+
+    .instructions-box {
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+
+    .inst-grid {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        font-size: 0.75rem;
+    }
+
+    .inst-icon {
+        font-size: 1rem;
+        min-width: 18px;
+    }
+
+    .menu-btn-group {
+        gap: 6px;
+    }
+
+    .action-btn {
+        padding: 9px 14px;
+        font-size: 0.88rem;
+    }
+
+    .secondary-start-btn {
+        padding: 7px 12px;
+        font-size: 0.82rem;
+    }
+
+    /* Sensor tugmalar gorizontal holatda o'rtani to'smay burchaklarga joylashadi */
+    #mobile-controls {
+        bottom: max(8px, env(safe-area-inset-bottom, 8px));
+        left: max(14px, env(safe-area-inset-left, 14px));
+        right: max(14px, env(safe-area-inset-right, 14px));
+    }
+
+    .steer-btn {
+        width: 52px;
+        height: 52px;
+    }
+
+    .jump-btn {
+        width: 120px;
+        height: 38px;
+    }
+
+    .brake-btn {
+        width: 52px;
+        height: 46px;
+    }
+
+    .nitro-btn {
+        width: 68px;
+        height: 46px;
     }
 }

@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Mushukcha Uyga Qaytadi 3D | Egri Ko'chalar & Real Fizika</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,22 +25,22 @@
                     <span class="hud-symbol coin-icon">🪙</span>
                     <span id="coin-display">0</span>
                 </div>
-                <div class="hud-pill score-pill" title="Ball">
+                <div class="hud-pill score-pill desktop-only" title="Ball">
                     <span class="hud-symbol">⭐</span>
                     <span id="score-display">0</span>
-                    <small class="desktop-only" style="opacity:0.7;font-size:0.75rem;margin-left:4px;">(Rekord: <span id="high-score-display">0</span>)</small>
+                    <small style="opacity:0.7;font-size:0.75rem;margin-left:4px;">(Rekord: <span id="high-score-display">0</span>)</small>
                 </div>
-                <!-- Poyga Spidometri -->
-                <div class="hud-pill speed-pill" title="Tezlik">
+                <!-- Poyga Spidometri (Desktop) -->
+                <div class="hud-pill speed-pill desktop-only" title="Tezlik">
                     <span class="hud-symbol">⚡</span>
                     <span id="speed-val">90</span> <small>km/h</small>
                 </div>
             </div>
 
             <div class="hud-group hud-center">
-                <div id="level-badge" class="level-badge hardcore-badge">🏁 POYGA: ENG QIYIN BOSQICH</div>
+                <div id="level-badge" class="level-badge hardcore-badge desktop-only">🏁 POYGA: ENG QIYIN BOSQICH</div>
                 <div id="dist-pill" class="hud-pill dist-pill" title="Masofa">
-                    <span>🛣️ </span><span id="dist-val">0</span> / <span id="dist-total">700</span>m
+                    <span>🛣️ </span><span id="dist-val">0</span><span class="dist-slash">/</span><span id="dist-total">700</span>m
                 </div>
                 <div id="shield-indicator" class="shield-indicator hidden">
                     <span class="shield-pulse">🛡️</span>
@@ -49,35 +49,91 @@
             </div>
 
             <div class="hud-group hud-right">
-                <div id="fps-counter" class="fps-pill" title="FPS">60 FPS</div>
-                <button id="sound-btn" class="hud-btn" aria-label="Ovoz">🔊</button>
+                <div id="fps-counter" class="fps-pill desktop-only" title="FPS">60 FPS</div>
+                <button id="sound-btn" class="hud-btn desktop-only" aria-label="Ovoz">🔊</button>
+                <!-- Mobil Burger Menu Tugmasi -->
+                <button id="burger-btn" class="hud-btn mobile-only burger-btn" aria-label="Menyu va Sozlamalar">☰</button>
                 <button id="pause-btn" class="hud-btn" aria-label="Pauza">⏸️</button>
             </div>
         </header>
 
+        <!-- Mobil Burger Sozlamalar Menyu Drawer -->
+        <div id="burger-drawer" class="burger-drawer hidden">
+            <div class="drawer-backdrop" id="drawer-backdrop"></div>
+            <div class="drawer-card">
+                <div class="drawer-header">
+                    <div class="drawer-title">⚙️ O'yin Sozlamalari</div>
+                    <button id="drawer-close-btn" class="drawer-close-btn" aria-label="Yopish">✕</button>
+                </div>
+                <div class="drawer-body">
+                    <div class="drawer-stats-grid">
+                        <div class="drawer-stat-item">
+                            <span class="drawer-stat-label">🏁 Bosqich:</span>
+                            <span id="drawer-level-val" class="drawer-stat-value">Eng Qiyin Poyga</span>
+                        </div>
+                        <div class="drawer-stat-item">
+                            <span class="drawer-stat-label">⚡ Tezlik:</span>
+                            <span class="drawer-stat-value"><span id="drawer-speed-val">0</span> km/h</span>
+                        </div>
+                        <div class="drawer-stat-item">
+                            <span class="drawer-stat-label">⭐ Ball:</span>
+                            <span class="drawer-stat-value"><span id="drawer-score-val">0</span></span>
+                        </div>
+                        <div class="drawer-stat-item">
+                            <span class="drawer-stat-label">🏆 Rekord:</span>
+                            <span class="drawer-stat-value"><span id="drawer-best-val">0</span></span>
+                        </div>
+                        <div class="drawer-stat-item">
+                            <span class="drawer-stat-label">🟢 FPS:</span>
+                            <span id="drawer-fps-val" class="drawer-stat-value">60 FPS</span>
+                        </div>
+                    </div>
+
+                    <div class="drawer-actions-list">
+                        <button id="drawer-sound-btn" class="drawer-btn">
+                            <span id="drawer-sound-icon">🔊</span>
+                            <span>Ovoz: <b id="drawer-sound-status">Yoqilgan</b></span>
+                        </button>
+                        <button id="drawer-controls-toggle-btn" class="drawer-btn">
+                            <span>🎮</span>
+                            <span>Sensor Tugmalar: <b id="drawer-controls-status">Yoqilgan</b></span>
+                        </button>
+                        <button id="drawer-restart-btn" class="drawer-btn danger-drawer-btn">
+                            <span>🔄</span>
+                            <span>O'yinni Qayta Boshlash</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Bosh Menyu Ekrani -->
         <div id="menu-screen" class="modal-screen">
             <div class="modal-card racing-modal">
-                <div class="mascot-cat">🐱🏎️</div>
-                <h1 class="game-title racing-title">Mushukcha Uyga Qaytadi 3D</h1>
-                <p class="game-subtitle">O'ng va chapga buriluvchi egri ko'chalar, real fizika va tartibli shahar trassasi!</p>
+                <div class="modal-header-compact">
+                    <div class="mascot-cat">🐱🏎️</div>
+                    <h1 class="game-title racing-title">Mushukcha Uyga Qaytadi 3D</h1>
+                    <p class="game-subtitle">Egri ko'chalar, real fizika va shahar trassasi poygasi!</p>
+                </div>
                 
                 <div class="instructions-box">
-                    <div class="inst-item">
-                        <span class="inst-icon">🛣️</span>
-                        <span><b>Egri Ko'chalar:</b> O'ngga va chapga buriladigan haqiqiy 3D shahar yo'llari!</span>
-                    </div>
-                    <div class="inst-item">
-                        <span class="inst-icon">🐾</span>
-                        <span><b>Mushukcha Fizikasi:</b> Inersiya, burilish burchagi (tilt), sakrash va yumshoq qo'nish!</span>
-                    </div>
-                    <div class="inst-item">
-                        <span class="inst-icon">🕹️</span>
-                        <span><b>Boshqaruv:</b> <b>A / D</b> (burilish), <b>W</b> (gaz / nitro), <b>S</b> (tormoz), <b>Space</b> (sakrash).</span>
-                    </div>
-                    <div class="inst-item">
-                        <span class="inst-icon">🚗</span>
-                        <span><b>Trassa Harakati:</b> Tartibli va o'lchovli transport oqimi, xavfli mashinalardan qoching!</span>
+                    <div class="inst-grid">
+                        <div class="inst-item">
+                            <span class="inst-icon">🛣️</span>
+                            <span><b>Egri Ko'chalar:</b> O'ng va chapga burilish</span>
+                        </div>
+                        <div class="inst-item">
+                            <span class="inst-icon">🐾</span>
+                            <span><b>Fizika:</b> Inersiya, sakrash, drift</span>
+                        </div>
+                        <div class="inst-item">
+                            <span class="inst-icon">🕹️</span>
+                            <span><b>Boshqaruv:</b> <b>◀ ▶</b> burilish, <b>⚡</b> nitro, <b>🦘</b> sakrash</span>
+                        </div>
+                        <div class="inst-item">
+                            <span class="inst-icon">🚗</span>
+                            <span><b>Xavf:</b> Mashinalardan va itlardan ehtiyot bo'ling!</span>
+                        </div>
                     </div>
                 </div>
 
@@ -150,16 +206,38 @@
             </div>
         </div>
 
-        <!-- Mobil Qurilmalar uchun Sensor Poyga Tugmalari -->
-        <div id="mobile-controls">
+        <!-- Mobil Qurilmalar uchun Sensor Poyga Tugmalari (Ergonomic 2-Thumb Controls) -->
+        <div id="mobile-controls" class="mobile-controls-container">
+            <!-- Chap barmoq: Burilish tugmalari (D-Pad) -->
             <div class="mobile-dpad">
-                <button id="touch-left" class="touch-btn" aria-label="Chapga">◀ CHAP</button>
-                <button id="touch-right" class="touch-btn" aria-label="O'ngga">O'NG ▶</button>
+                <button id="touch-left" class="touch-btn steer-btn steer-left" aria-label="Chapga burilish">
+                    <span class="touch-icon">◀</span>
+                    <span class="touch-label">CHAP</span>
+                </button>
+                <button id="touch-right" class="touch-btn steer-btn steer-right" aria-label="O'ngga burilish">
+                    <span class="touch-icon">▶</span>
+                    <span class="touch-label">O'NG</span>
+                </button>
             </div>
+
+            <!-- O'ng barmoq: Harakat va Sakrash tugmalari -->
             <div class="mobile-actions">
-                <button id="touch-brake" class="touch-btn brake-btn" aria-label="Tormoz">TORMOZ</button>
-                <button id="touch-forward" class="touch-btn nitro-btn" aria-label="Gaz">⚡ NITRO</button>
-                <button id="touch-jump" class="touch-btn jump-btn" aria-label="Sakrash">SAKRASH</button>
+                <div class="action-top-row">
+                    <button id="touch-jump" class="touch-btn jump-btn" aria-label="Sakrash">
+                        <span class="touch-icon">🦘</span>
+                        <span class="touch-label">SAKRASH</span>
+                    </button>
+                </div>
+                <div class="action-bottom-row">
+                    <button id="touch-brake" class="touch-btn brake-btn" aria-label="Tormoz">
+                        <span class="touch-icon">🛑</span>
+                        <span class="touch-label">TORMOZ</span>
+                    </button>
+                    <button id="touch-forward" class="touch-btn nitro-btn" aria-label="Gaz va Nitro">
+                        <span class="touch-icon">⚡</span>
+                        <span class="touch-label">NITRO</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

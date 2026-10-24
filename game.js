@@ -1409,6 +1409,22 @@ class GameEngine3D {
             soundBtn: document.getElementById("sound-btn"),
             pauseBtn: document.getElementById("pause-btn"),
 
+            burgerBtn: document.getElementById("burger-btn"),
+            burgerDrawer: document.getElementById("burger-drawer"),
+            drawerCloseBtn: document.getElementById("drawer-close-btn"),
+            drawerBackdrop: document.getElementById("drawer-backdrop"),
+            drawerLevelVal: document.getElementById("drawer-level-val"),
+            drawerSpeedVal: document.getElementById("drawer-speed-val"),
+            drawerScoreVal: document.getElementById("drawer-score-val"),
+            drawerBestVal: document.getElementById("drawer-best-val"),
+            drawerFpsVal: document.getElementById("drawer-fps-val"),
+            drawerSoundBtn: document.getElementById("drawer-sound-btn"),
+            drawerSoundIcon: document.getElementById("drawer-sound-icon"),
+            drawerSoundStatus: document.getElementById("drawer-sound-status"),
+            drawerControlsToggleBtn: document.getElementById("drawer-controls-toggle-btn"),
+            drawerControlsStatus: document.getElementById("drawer-controls-status"),
+            drawerRestartBtn: document.getElementById("drawer-restart-btn"),
+
             menuScreen: document.getElementById("menu-screen"),
             pauseScreen: document.getElementById("pause-screen"),
             levelCompleteScreen: document.getElementById("level-complete-screen"),
@@ -1447,13 +1463,33 @@ class GameEngine3D {
     }
 
     bindEvents() {
-        window.addEventListener("resize", () => {
+        // Sensor qurilmalarni aniqlash
+        const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
+        if (isTouch) {
+            document.body.classList.add("is-touch-device");
+        }
+
+        // Dinamik FOV va moslashuvchan o'lcham (Vertical va Gorizontal)
+        const updateViewSize = () => {
             this.width = window.innerWidth;
             this.height = window.innerHeight;
-            this.camera.aspect = this.width / this.height;
+            const aspect = this.width / this.height;
+            this.camera.aspect = aspect;
+
+            if (aspect < 1.0) {
+                // Vertical (portrait) holatda 3D trassa va mushuk to'liq sig'ishi uchun FOV kengaytiriladi
+                this.camera.fov = Math.min(76, Math.max(54, 54 + (1.0 - aspect) * 26));
+            } else {
+                // Gorizontal (landscape) poyga uchun standart optimal FOV
+                this.camera.fov = 54;
+            }
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(this.width, this.height);
-        });
+        };
+
+        window.addEventListener("resize", updateViewSize);
+        window.addEventListener("orientationchange", () => setTimeout(updateViewSize, 120));
+        updateViewSize();
 
         window.addEventListener("keydown", (e) => {
             this.sound.init();
@@ -1476,24 +1512,29 @@ class GameEngine3D {
             if (e.code === "Space") this.keys.jump = false;
         });
 
-        // Mobil sensor boshqaruv
+        // Professional mobil sensor boshqaruv (Touch & Pointer mustahkamligi)
         const setupTouch = (elem, key) => {
             if (!elem) return;
             const onStart = (e) => {
-                e.preventDefault();
+                if (e && e.cancelable) e.preventDefault();
                 this.sound.init();
                 this.keys[key] = true;
                 elem.classList.add("active");
             };
             const onEnd = (e) => {
-                e.preventDefault();
+                if (e && e.cancelable) e.preventDefault();
                 this.keys[key] = false;
                 elem.classList.remove("active");
             };
+
             elem.addEventListener("touchstart", onStart, { passive: false });
             elem.addEventListener("touchend", onEnd, { passive: false });
-            elem.addEventListener("mousedown", onStart);
-            elem.addEventListener("mouseup", onEnd);
+            elem.addEventListener("touchcancel", onEnd, { passive: false });
+            elem.addEventListener("pointerdown", onStart);
+            elem.addEventListener("pointerup", onEnd);
+            elem.addEventListener("pointercancel", onEnd);
+            elem.addEventListener("pointerleave", onEnd);
+            elem.addEventListener("contextmenu", (e) => e.preventDefault());
         };
 
         setupTouch(this.ui.touchLeft, "left");
@@ -1502,11 +1543,63 @@ class GameEngine3D {
         setupTouch(this.ui.touchBrake, "backward");
         setupTouch(this.ui.touchJump, "jump");
 
-        if (this.ui.soundBtn) {
-            this.ui.soundBtn.addEventListener("click", () => {
-                this.sound.init();
-                const isMuted = this.sound.toggleMute();
-                this.ui.soundBtn.textContent = isMuted ? "🔇" : "🔊";
+        // Ovoz boshqaruvi
+        const toggleSound = () => {
+            this.sound.init();
+            const isMuted = this.sound.toggleMute();
+            if (this.ui.soundBtn) this.ui.soundBtn.textContent = isMuted ? "🔇" : "🔊";
+            if (this.ui.drawerSoundIcon) this.ui.drawerSoundIcon.textContent = isMuted ? "🔇" : "🔊";
+            if (this.ui.drawerSoundStatus) this.ui.drawerSoundStatus.textContent = isMuted ? "O'chirilgan" : "Yoqilgan";
+        };
+
+        if (this.ui.soundBtn) this.ui.soundBtn.addEventListener("click", toggleSound);
+        if (this.ui.drawerSoundBtn) this.ui.drawerSoundBtn.addEventListener("click", toggleSound);
+
+        // Burger Drawer (Mobil Sozlamalar) ochish va yopish
+        const openDrawer = () => {
+            if (this.ui.burgerDrawer) {
+                this.ui.burgerDrawer.classList.remove("hidden");
+                this.syncDrawerStats();
+            }
+        };
+
+        const closeDrawer = () => {
+            if (this.ui.burgerDrawer) {
+                this.ui.burgerDrawer.classList.add("hidden");
+            }
+        };
+
+        if (this.ui.burgerBtn) this.ui.burgerBtn.addEventListener("click", openDrawer);
+        if (this.ui.drawerCloseBtn) this.ui.drawerCloseBtn.addEventListener("click", closeDrawer);
+        if (this.ui.drawerBackdrop) this.ui.drawerBackdrop.addEventListener("click", closeDrawer);
+
+        // Sensor tugmalar rejimini o'zgartirish (Avto / Ko'rsatish / Yashirish)
+        this.controlsMode = "auto";
+        if (this.ui.drawerControlsToggleBtn) {
+            this.ui.drawerControlsToggleBtn.addEventListener("click", () => {
+                if (this.controlsMode === "auto") {
+                    this.controlsMode = "show";
+                    document.body.classList.add("force-show-controls");
+                    document.body.classList.remove("force-hide-controls");
+                    if (this.ui.drawerControlsStatus) this.ui.drawerControlsStatus.textContent = "Doim ko'rsatish";
+                } else if (this.controlsMode === "show") {
+                    this.controlsMode = "hide";
+                    document.body.classList.remove("force-show-controls");
+                    document.body.classList.add("force-hide-controls");
+                    if (this.ui.drawerControlsStatus) this.ui.drawerControlsStatus.textContent = "Yashirish";
+                } else {
+                    this.controlsMode = "auto";
+                    document.body.classList.remove("force-show-controls");
+                    document.body.classList.remove("force-hide-controls");
+                    if (this.ui.drawerControlsStatus) this.ui.drawerControlsStatus.textContent = "Avtomatik";
+                }
+            });
+        }
+
+        if (this.ui.drawerRestartBtn) {
+            this.ui.drawerRestartBtn.addEventListener("click", () => {
+                closeDrawer();
+                this.startNewGame();
             });
         }
 
@@ -1528,6 +1621,19 @@ class GameEngine3D {
         if (this.ui.resumeBtn) this.ui.resumeBtn.addEventListener("click", () => this.togglePause());
         if (this.ui.restartFromPauseBtn) this.ui.restartFromPauseBtn.addEventListener("click", () => this.startNewGame());
         if (this.ui.nextLevelBtn) this.ui.nextLevelBtn.addEventListener("click", () => this.startNextLevel());
+        if (this.ui.restartBtn) this.ui.restartBtn.addEventListener("click", () => this.startNewGame());
+        if (this.ui.playAgainBtn) this.ui.playAgainBtn.addEventListener("click", () => this.startNewGame());
+    }
+
+    syncDrawerStats() {
+        const cfg = LEVEL_CONFIGS[this.currentLevelIndex];
+        if (this.ui.drawerLevelVal) this.ui.drawerLevelVal.textContent = cfg ? cfg.title.split(':')[1] || cfg.title : "Eng Qiyin Poyga";
+        if (this.ui.drawerScoreVal) this.ui.drawerScoreVal.textContent = this.score;
+        if (this.ui.drawerBestVal) this.ui.drawerBestVal.textContent = this.highScore;
+        if (this.ui.drawerFpsVal) this.ui.drawerFpsVal.textContent = `${this.fps || 60} FPS`;
+        const kmh = Math.round(this.player ? this.player.vs * 235 : 0);
+        if (this.ui.drawerSpeedVal) this.ui.drawerSpeedVal.textContent = kmh;
+    }
         if (this.ui.restartBtn) this.ui.restartBtn.addEventListener("click", () => this.startNewGame());
         if (this.ui.playAgainBtn) this.ui.playAgainBtn.addEventListener("click", () => this.startNewGame());
     }
@@ -1798,6 +1904,10 @@ class GameEngine3D {
     setGameState(newState) {
         this.state = newState;
 
+        document.body.classList.remove("state-menu", "state-playing", "state-paused", "state-gameover", "state-victory", "state-complete");
+        document.body.classList.add(`state-${newState.toLowerCase()}`);
+
+        if (this.ui.burgerDrawer) this.ui.burgerDrawer.classList.add("hidden");
         if (this.ui.menuScreen) this.ui.menuScreen.classList.add("hidden");
         if (this.ui.pauseScreen) this.ui.pauseScreen.classList.add("hidden");
         if (this.ui.levelCompleteScreen) this.ui.levelCompleteScreen.classList.add("hidden");
@@ -1869,6 +1979,8 @@ class GameEngine3D {
         } else {
             if (this.ui.shieldIndicator) this.ui.shieldIndicator.classList.add("hidden");
         }
+
+        this.syncDrawerStats();
     }
 
     takeHit() {
@@ -1925,6 +2037,7 @@ class GameEngine3D {
         if (this.ui.distVal) this.ui.distVal.textContent = Math.floor(p.s);
         const kmh = Math.round(p.vs * 235);
         if (this.ui.speedVal) this.ui.speedVal.textContent = kmh;
+        if (this.ui.drawerSpeedVal) this.ui.drawerSpeedVal.textContent = kmh;
 
         // 3. REAL LATERAL DRIFT VA STEERING FIZIKASI
         let targetLateralSpeed = 0;
@@ -2207,6 +2320,7 @@ class GameEngine3D {
         if (time - this.lastFpsUpdate >= 1000) {
             this.fps = Math.round((this.frames * 1000) / (time - this.lastFpsUpdate));
             if (this.ui.fpsCounter) this.ui.fpsCounter.textContent = `${this.fps} FPS`;
+            if (this.ui.drawerFpsVal) this.ui.drawerFpsVal.textContent = `${this.fps} FPS`;
             this.frames = 0;
             this.lastFpsUpdate = time;
         }
