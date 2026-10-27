@@ -218,6 +218,48 @@ class SoundController {
         });
     }
 
+    // Mashina povorotnik chertilishi (Tick-tick)
+    playBlinker() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.025);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.025);
+    }
+
+    // Mushukchaning charchagan nafas ovozi (Panting)
+    playExhausted() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(160, now + 0.12);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.12);
+    }
+
     playHit() {
         if (this.muted || !this.ctx) return;
         const now = this.ctx.currentTime;
@@ -502,8 +544,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -350)
         ],
         skyColor: 0x0a1128, fogColor: 0x0f1c3f, roadColor: 0x242831,
-        dogCount: 3, dogSpeed: 0.10, dogVision: 18,
-        carCount: 4, carSpeed: 0.32,
+        dogCount: 3, dogSpeed: 0.10, dogVision: 18, chasingDogs: false,
+        carCount: 4, carSpeed: 0.32, aiTraffic: false, laneChangeProb: 0.0,
         coinCount: 22, fishCount: 6, milkCount: 2, starCount: 1, puddleCount: 2
     },
     {
@@ -518,8 +560,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -410)
         ],
         skyColor: 0x070b19, fogColor: 0x0d1527, roadColor: 0x1e272e,
-        dogCount: 3, dogSpeed: 0.11, dogVision: 20,
-        carCount: 4, carSpeed: 0.35,
+        dogCount: 3, dogSpeed: 0.11, dogVision: 20, chasingDogs: false,
+        carCount: 4, carSpeed: 0.35, aiTraffic: false, laneChangeProb: 0.0,
         coinCount: 26, fishCount: 7, milkCount: 2, starCount: 1, puddleCount: 3
     },
     {
@@ -535,8 +577,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -490)
         ],
         skyColor: 0x081326, fogColor: 0x0f213d, roadColor: 0x212a36,
-        dogCount: 4, dogSpeed: 0.12, dogVision: 22,
-        carCount: 5, carSpeed: 0.38,
+        dogCount: 4, dogSpeed: 0.12, dogVision: 22, chasingDogs: false,
+        carCount: 5, carSpeed: 0.38, aiTraffic: true, laneChangeProb: 0.35,
         coinCount: 30, fishCount: 8, milkCount: 3, starCount: 2, puddleCount: 3
     },
     {
@@ -552,8 +594,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -540)
         ],
         skyColor: 0x050a14, fogColor: 0x0d1728, roadColor: 0x1b232e,
-        dogCount: 4, dogSpeed: 0.13, dogVision: 23,
-        carCount: 5, carSpeed: 0.40,
+        dogCount: 4, dogSpeed: 0.13, dogVision: 23, chasingDogs: false,
+        carCount: 5, carSpeed: 0.40, aiTraffic: true, laneChangeProb: 0.45,
         coinCount: 34, fishCount: 9, milkCount: 3, starCount: 2, puddleCount: 4
     },
     {
@@ -569,8 +611,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -590)
         ],
         skyColor: 0x040810, fogColor: 0x0a1422, roadColor: 0x18202a,
-        dogCount: 5, dogSpeed: 0.13, dogVision: 24,
-        carCount: 5, carSpeed: 0.42,
+        dogCount: 5, dogSpeed: 0.13, dogVision: 24, chasingDogs: true, dogChaseSpeed: 0.25,
+        carCount: 5, carSpeed: 0.42, aiTraffic: true, laneChangeProb: 0.55,
         coinCount: 38, fishCount: 10, milkCount: 3, starCount: 2, puddleCount: 4
     },
     {
@@ -586,8 +628,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -640)
         ],
         skyColor: 0x040710, fogColor: 0x0a1120, roadColor: 0x171f28,
-        dogCount: 5, dogSpeed: 0.14, dogVision: 25,
-        carCount: 6, carSpeed: 0.45,
+        dogCount: 5, dogSpeed: 0.14, dogVision: 25, chasingDogs: true, dogChaseSpeed: 0.28,
+        carCount: 6, carSpeed: 0.45, aiTraffic: true, laneChangeProb: 0.65,
         coinCount: 42, fishCount: 11, milkCount: 4, starCount: 2, puddleCount: 5
     },
     {
@@ -603,8 +645,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -690)
         ],
         skyColor: 0x03060c, fogColor: 0x090e1a, roadColor: 0x151b22,
-        dogCount: 6, dogSpeed: 0.15, dogVision: 26,
-        carCount: 6, carSpeed: 0.47,
+        dogCount: 6, dogSpeed: 0.15, dogVision: 26, chasingDogs: true, dogChaseSpeed: 0.31,
+        carCount: 6, carSpeed: 0.47, aiTraffic: true, laneChangeProb: 0.75,
         coinCount: 46, fishCount: 12, milkCount: 4, starCount: 3, puddleCount: 5
     },
     {
@@ -620,8 +662,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -730)
         ],
         skyColor: 0x03050a, fogColor: 0x070c16, roadColor: 0x141a20,
-        dogCount: 6, dogSpeed: 0.16, dogVision: 27,
-        carCount: 6, carSpeed: 0.50,
+        dogCount: 6, dogSpeed: 0.16, dogVision: 27, chasingDogs: true, dogChaseSpeed: 0.34,
+        carCount: 6, carSpeed: 0.50, aiTraffic: true, laneChangeProb: 0.82,
         coinCount: 50, fishCount: 13, milkCount: 4, starCount: 3, puddleCount: 5
     },
     {
@@ -638,8 +680,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -770)
         ],
         skyColor: 0x020306, fogColor: 0x060910, roadColor: 0x12171d,
-        dogCount: 7, dogSpeed: 0.17, dogVision: 28,
-        carCount: 7, carSpeed: 0.52,
+        dogCount: 7, dogSpeed: 0.17, dogVision: 28, chasingDogs: true, dogChaseSpeed: 0.36,
+        carCount: 7, carSpeed: 0.52, aiTraffic: true, laneChangeProb: 0.90,
         coinCount: 54, fishCount: 14, milkCount: 5, starCount: 3, puddleCount: 6
     },
     {
@@ -658,8 +700,8 @@ const LEVEL_CONFIGS = [
             new THREE.Vector3(0, 0, -830)
         ],
         skyColor: 0x020205, fogColor: 0x05070e, roadColor: 0x11151a,
-        dogCount: 7, dogSpeed: 0.18, dogVision: 30,
-        carCount: 7, carSpeed: 0.55,
+        dogCount: 7, dogSpeed: 0.18, dogVision: 30, chasingDogs: true, dogChaseSpeed: 0.38,
+        carCount: 7, carSpeed: 0.55, aiTraffic: true, laneChangeProb: 0.98,
         coinCount: 65, fishCount: 16, milkCount: 5, starCount: 4, puddleCount: 6
     }
 ];
@@ -835,7 +877,31 @@ const ModelFactory = {
         shadow.position.y = 0.02;
         group.add(shadow);
 
-        return { mesh: group, wheels, isTruck: false };
+        // Povorotniklar (To'q sariq miltillovchi chiroqlar)
+        const blinkerMat = new THREE.MeshBasicMaterial({ color: 0xffa502 });
+        const blinkerGeo = new THREE.BoxGeometry(0.18, 0.12, 0.08);
+
+        const blinkerFL = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerFL.position.set(-0.85, 0.55, -1.82);
+        blinkerFL.visible = false;
+        group.add(blinkerFL);
+
+        const blinkerFR = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerFR.position.set(0.85, 0.55, -1.82);
+        blinkerFR.visible = false;
+        group.add(blinkerFR);
+
+        const blinkerRL = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerRL.position.set(-0.85, 0.55, 1.74);
+        blinkerRL.visible = false;
+        group.add(blinkerRL);
+
+        const blinkerRR = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerRR.position.set(0.85, 0.55, 1.74);
+        blinkerRR.visible = false;
+        group.add(blinkerRR);
+
+        return { mesh: group, wheels, isTruck: false, blinkers: { fl: blinkerFL, fr: blinkerFR, rl: blinkerRL, rr: blinkerRR } };
     },
 
     // 3. 3D Yuk Mashinasi / Fura (Semi-Truck)
@@ -889,7 +955,31 @@ const ModelFactory = {
         shadow.position.y = 0.02;
         group.add(shadow);
 
-        return { mesh: group, wheels, isTruck: true };
+        // Povorotniklar (Yuk mashinasi uchun)
+        const blinkerMat = new THREE.MeshBasicMaterial({ color: 0xffa502 });
+        const blinkerGeo = new THREE.BoxGeometry(0.2, 0.14, 0.1);
+
+        const blinkerFL = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerFL.position.set(-1.0, 0.65, -3.02);
+        blinkerFL.visible = false;
+        group.add(blinkerFL);
+
+        const blinkerFR = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerFR.position.set(1.0, 0.65, -3.02);
+        blinkerFR.visible = false;
+        group.add(blinkerFR);
+
+        const blinkerRL = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerRL.position.set(-1.05, 0.65, 2.92);
+        blinkerRL.visible = false;
+        group.add(blinkerRL);
+
+        const blinkerRR = new THREE.Mesh(blinkerGeo, blinkerMat);
+        blinkerRR.position.set(1.05, 0.65, 2.92);
+        blinkerRR.visible = false;
+        group.add(blinkerRR);
+
+        return { mesh: group, wheels, isTruck: true, blinkers: { fl: blinkerFL, fr: blinkerFR, rl: blinkerRL, rr: blinkerRR } };
     },
 
     // 4. Dushman It (Guard Dog)
@@ -1359,7 +1449,14 @@ class GameEngine3D {
             invulnTimer: 0,
             hasShield: false,
             shieldTimer: 0,
-            inPuddle: false
+            inPuddle: false,
+
+            // Stamina & Nitro mexanikasi
+            stamina: 100,
+            maxStamina: 100,
+            staminaDrainRate: 0.52,
+            staminaRegenRate: 0.20,
+            isExhausted: false
         };
 
         // Meshlar va massivlar
@@ -1405,6 +1502,9 @@ class GameEngine3D {
             distTotal: document.getElementById("dist-total"),
             shieldIndicator: document.getElementById("shield-indicator"),
             shieldTimer: document.getElementById("shield-timer"),
+            staminaPill: document.getElementById("stamina-pill"),
+            staminaBar: document.getElementById("stamina-bar"),
+            staminaText: document.getElementById("stamina-text"),
             fpsCounter: document.getElementById("fps-counter"),
             soundBtn: document.getElementById("sound-btn"),
             pauseBtn: document.getElementById("pause-btn"),
@@ -1415,6 +1515,7 @@ class GameEngine3D {
             drawerBackdrop: document.getElementById("drawer-backdrop"),
             drawerLevelVal: document.getElementById("drawer-level-val"),
             drawerSpeedVal: document.getElementById("drawer-speed-val"),
+            drawerStaminaVal: document.getElementById("drawer-stamina-val"),
             drawerScoreVal: document.getElementById("drawer-score-val"),
             drawerBestVal: document.getElementById("drawer-best-val"),
             drawerFpsVal: document.getElementById("drawer-fps-val"),
@@ -1639,6 +1740,9 @@ class GameEngine3D {
         if (this.ui.drawerFpsVal) this.ui.drawerFpsVal.textContent = `${this.fps || 60} FPS`;
         const kmh = Math.round(this.player ? this.player.vs * 235 : 0);
         if (this.ui.drawerSpeedVal) this.ui.drawerSpeedVal.textContent = kmh;
+        if (this.ui.drawerStaminaVal && this.player) {
+            this.ui.drawerStaminaVal.textContent = `${Math.round(this.player.stamina)}%`;
+        }
     }
 
     // ==========================================
@@ -1694,6 +1798,9 @@ class GameEngine3D {
         this.player.stride = 0.0;
         this.player.isInvulnerable = false;
         this.player.hasShield = false;
+        this.player.stamina = 100;
+        this.player.maxStamina = 100;
+        this.player.isExhausted = false;
 
         const startPt = this.track.getPoint(this.player.s, this.player.d, 0);
         this.catObj.mesh.position.copy(startPt);
@@ -1789,6 +1896,8 @@ class GameEngine3D {
                 speed: cfg.dogSpeed,
                 visionRange: cfg.dogVision,
                 aiState: "PATROL",
+                chaseTimer: 0,
+                tiredTimer: 0,
                 walkCycle: 0
             });
         }
@@ -1813,8 +1922,13 @@ class GameEngine3D {
                 ...vehicle,
                 s,
                 d: laneD,
+                laneD,
                 speed: cfg.carSpeed * 0.75, // O'lchovli xavfsiz tezlik
-                hasHorned: false
+                hasHorned: false,
+                isChangingLane: false,
+                targetLaneD: laneD,
+                blinkerTimer: 0,
+                changeCooldown: 100 + Math.floor(Math.random() * 200)
             });
         }
 
@@ -1995,6 +2109,22 @@ class GameEngine3D {
             if (this.ui.shieldIndicator) this.ui.shieldIndicator.classList.add("hidden");
         }
 
+        // Stamina ko'rsatkichi
+        if (this.player && this.ui.staminaBar) {
+            const stamPct = Math.max(0, Math.min(100, Math.round(this.player.stamina)));
+            this.ui.staminaBar.style.width = `${stamPct}%`;
+            if (this.ui.staminaText) {
+                this.ui.staminaText.textContent = `${stamPct}%`;
+            }
+            if (this.ui.staminaPill) {
+                if (stamPct <= 25) {
+                    this.ui.staminaPill.classList.add("stamina-low");
+                } else {
+                    this.ui.staminaPill.classList.remove("stamina-low");
+                }
+            }
+        }
+
         this.syncDrawerStats();
     }
 
@@ -2029,12 +2159,27 @@ class GameEngine3D {
         if (onWater && !p.inPuddle) this.sound.playSplash();
         p.inPuddle = onWater;
 
-        // 2. REAL FORWARD INERSIYA (Tezlanish, nitro, tormoz)
+        // 2. REAL FORWARD INERSIYA (Tezlanish, nitro, stamina va tormoz)
         let targetForwardSpeed = 0.36; // Normal yugurish (~85 km/h)
-        if (this.keys.forward) {
-            targetForwardSpeed = 0.56; // Gaz / Nitro (~130 km/h)
+
+        if (this.keys.forward && p.stamina > 0 && !p.isExhausted) {
+            targetForwardSpeed = 0.58; // Gaz / Nitro (~136 km/h)
+            p.stamina = Math.max(0, p.stamina - p.staminaDrainRate);
+            if (p.stamina <= 0) {
+                p.isExhausted = true;
+                this.sound.playExhausted();
+            }
         } else if (this.keys.backward) {
             targetForwardSpeed = 0.16; // Tormoz (~38 km/h)
+            p.stamina = Math.min(p.maxStamina, p.stamina + p.staminaRegenRate * 1.5);
+        } else {
+            // Normal yugurishda stamina sekin tiklanadi
+            p.stamina = Math.min(p.maxStamina, p.stamina + p.staminaRegenRate);
+        }
+
+        // Charchoqdan chiqish (stamina 20% dan oshganda yana Nitro ishlatish mumkin)
+        if (p.isExhausted && p.stamina >= 20) {
+            p.isExhausted = false;
         }
 
         if (p.inPuddle) targetForwardSpeed *= 0.6;
@@ -2195,10 +2340,15 @@ class GameEngine3D {
                         this.sound.playCoin();
                     } else if (item.type === "fish") {
                         this.score += 15;
+                        p.stamina = Math.min(p.maxStamina, p.stamina + 45);
+                        p.isExhausted = false;
+                        p.vs += 0.10; // Qisqa tezlanish turtkisi
                         this.sound.playFish();
                     } else if (item.type === "milk") {
                         if (this.lives < this.maxLives) this.lives++;
                         else this.score += 30;
+                        p.stamina = p.maxStamina; // Stamina to'liq tiklanadi
+                        p.isExhausted = false;
                         this.sound.playMilk();
                     } else if (item.type === "star") {
                         p.hasShield = true;
@@ -2209,30 +2359,64 @@ class GameEngine3D {
             }
         }
 
-        // 7. DUSHMAN ITLAR AI (Trotuardan sezadi va hujumga o'tadi)
+        // 7. DUSHMAN ITLAR AI (PATROL, ALERT, CHASE, TIRED & SAKRAB QOCHISH)
         for (let dog of this.dogs) {
             const ds = Math.abs(p.s - dog.s);
             const dd = Math.abs(p.d - dog.d);
             const dist = Math.hypot(ds, dd);
 
+            dog.walkCycle = (dog.walkCycle || 0) + 0.18;
+            if (dog.legs) {
+                dog.legs[0].rotation.x = Math.sin(dog.walkCycle) * 0.5;
+                dog.legs[1].rotation.x = -Math.sin(dog.walkCycle) * 0.5;
+                dog.legs[2].rotation.x = -Math.sin(dog.walkCycle) * 0.5;
+                dog.legs[3].rotation.x = Math.sin(dog.walkCycle) * 0.5;
+            }
+
             if (p.hasShield && dist < dog.visionRange) {
                 dog.aiState = "FLEE";
                 dog.d += (dog.d > 0 ? 0.08 : -0.08);
-                dog.alertMesh.visible = false;
+                if (dog.alertMesh) dog.alertMesh.visible = false;
+            } else if (dog.aiState === "TIRED") {
+                // Charchagan holat: trotuarga qaytadi
+                dog.tiredTimer--;
+                if (dog.alertMesh) dog.alertMesh.visible = false;
+                dog.d += (dog.startD - dog.d) * 0.04;
+                if (dog.tiredTimer <= 0) {
+                    dog.aiState = "PATROL";
+                }
+            } else if (cfg.chasingDogs && dist < dog.visionRange && p.s < dog.s + 6 && this.state === "PLAYING") {
+                // Agressiv quvish holati (5-10 bosqichlar)
+                if (dog.aiState !== "CHASE") {
+                    this.sound.playBark();
+                    dog.aiState = "CHASE";
+                    dog.chaseTimer = 220;
+                }
+                if (dog.alertMesh) dog.alertMesh.visible = true;
+
+                // Mushukka tomon yo'lga chiqib quvish
+                const dirToCatD = Math.sign(p.d - dog.d);
+                dog.d += dirToCatD * (cfg.dogChaseSpeed || dog.speed * 1.5) * 0.75;
+                dog.s -= (cfg.dogChaseSpeed || dog.speed * 1.5) * 0.45;
+
+                dog.chaseTimer--;
+                // Agar mushuk o'tib ketsa yoki quvish vaqti tugasa
+                if (dog.chaseTimer <= 0 || (p.s > dog.s + 8)) {
+                    dog.aiState = "TIRED";
+                    dog.tiredTimer = 160;
+                }
             } else if (dist < dog.visionRange && this.state === "PLAYING") {
                 if (dog.aiState !== "CHASE") {
                     this.sound.playBark();
                 }
                 dog.aiState = "CHASE";
-                dog.alertMesh.visible = true;
-
-                // Mushukka tomon yuguradi
+                if (dog.alertMesh) dog.alertMesh.visible = true;
                 const dirToCat = Math.sign(p.d - dog.d);
-                dog.d += dirToCat * dog.speed * 1.4;
-                dog.s += Math.sign(p.s - dog.s) * dog.speed * 0.8;
+                dog.d += dirToCat * dog.speed * 1.2;
+                dog.s += Math.sign(p.s - dog.s) * dog.speed * 0.4;
             } else {
                 dog.aiState = "PATROL";
-                dog.alertMesh.visible = false;
+                if (dog.alertMesh) dog.alertMesh.visible = false;
                 dog.d += dog.dirD * dog.speed * 0.5;
                 if (Math.abs(dog.d) > 7.2) dog.dirD *= -1;
                 if (Math.abs(dog.d) < 5.8) dog.dirD *= -1;
@@ -2242,16 +2426,24 @@ class GameEngine3D {
             const dogPos = this.track.getPoint(dog.s, dog.d, 0);
             dog.mesh.position.copy(dogPos);
             const dogFrame = this.track.getFrame(dog.s);
-            dog.mesh.rotation.y = Math.atan2(dogFrame.tangent.x, dogFrame.tangent.z) + (dog.dirD > 0 ? Math.PI / 2 : -Math.PI / 2);
+            if (dog.aiState === "CHASE") {
+                dog.mesh.rotation.y = Math.atan2(dogFrame.tangent.x, dogFrame.tangent.z);
+            } else {
+                dog.mesh.rotation.y = Math.atan2(dogFrame.tangent.x, dogFrame.tangent.z) + (dog.dirD > 0 ? Math.PI / 2 : -Math.PI / 2);
+            }
 
-            // To'qnashuv
-            if (dist < 1.15 && p.y < 0.95 && this.state === "PLAYING") {
+            // To'qnashuvni tekshirish (p.y >= 0.95 bo'lsa sakrab o'tib ketiladi!)
+            if (dist < 1.25 && p.y < 0.95 && this.state === "PLAYING") {
                 if (p.hasShield) {
                     dog.d += (dog.d > 0 ? 3.0 : -3.0);
+                    dog.aiState = "TIRED";
+                    dog.tiredTimer = 180;
                 } else {
                     const hit = this.takeHit();
                     if (hit) {
                         this.lives--;
+                        dog.aiState = "TIRED";
+                        dog.tiredTimer = 180;
                         if (this.lives <= 0) {
                             if (this.ui.gameoverDistVal) this.ui.gameoverDistVal.textContent = Math.floor(p.s);
                             this.sound.playGameOver();
@@ -2263,7 +2455,7 @@ class GameEngine3D {
             }
         }
 
-        // 8. TARTIBLI TRANSPORT OQIMI (KAM MASHINALAR, TOZA POLOSALAR)
+        // 8. TARTIBLI TRANSPORT OQIMI VA SMART AI POLOSA ALMASHTIRISH
         for (let car of this.cars) {
             car.s -= car.speed; // Qarama-qarshi oqimda silliq harakatlanadi
             car.wheels.forEach(w => w.rotation.x += 0.22);
@@ -2271,16 +2463,75 @@ class GameEngine3D {
             // Mushuk o'sha polosada kelayotgan bo'lsa mashina signal chaladi
             const inSameLane = Math.abs(p.d - car.d) < 1.6;
             const distAhead = car.s - p.s;
-            if (inSameLane && distAhead > 0 && distAhead < 22 && !car.hasHorned) {
+            if (inSameLane && distAhead > 0 && distAhead < 24 && !car.hasHorned) {
                 this.sound.playHorn();
                 car.hasHorned = true;
+            }
+
+            // SMART AI: Polosa almashtirish
+            if (cfg.aiTraffic && !car.isChangingLane) {
+                car.changeCooldown--;
+                if (car.changeCooldown <= 0 && distAhead > 14 && distAhead < 75) {
+                    car.isChangingLane = true;
+                    car.targetLaneD = (car.d > 0 ? -3.2 : 3.2); // Qarama-qarshi xavfsiz polosaga
+                    car.blinkerTimer = 65; // ~1.1s burilish chirog'i miltillaydi
+                    this.sound.playBlinker();
+                }
+            }
+
+            // Burilish chiroqlarini boshqarish
+            if (car.blinkers) {
+                if (car.blinkerTimer > 0) {
+                    car.blinkerTimer--;
+                    const isLeftTarget = car.targetLaneD < car.d;
+                    const blinkOn = (Math.floor(car.blinkerTimer / 9) % 2 === 0);
+
+                    if (isLeftTarget) {
+                        car.blinkers.fl.material.color.setHex(blinkOn ? 0xffaa00 : 0x332200);
+                        car.blinkers.rl.material.color.setHex(blinkOn ? 0xffaa00 : 0x332200);
+                        car.blinkers.fr.material.color.setHex(0x332200);
+                        car.blinkers.rr.material.color.setHex(0x332200);
+                    } else {
+                        car.blinkers.fr.material.color.setHex(blinkOn ? 0xffaa00 : 0x332200);
+                        car.blinkers.rr.material.color.setHex(blinkOn ? 0xffaa00 : 0x332200);
+                        car.blinkers.fl.material.color.setHex(0x332200);
+                        car.blinkers.rl.material.color.setHex(0x332200);
+                    }
+                } else if (car.isChangingLane) {
+                    // Silliq lateral siljish
+                    car.d += (car.targetLaneD - car.d) * 0.045;
+                    if (Math.abs(car.d - car.targetLaneD) < 0.06) {
+                        car.d = car.targetLaneD;
+                        car.isChangingLane = false;
+                        car.changeCooldown = 200 + Math.floor(Math.random() * 240);
+                        car.blinkers.fl.material.color.setHex(0x332200);
+                        car.blinkers.fr.material.color.setHex(0x332200);
+                        car.blinkers.rl.material.color.setHex(0x332200);
+                        car.blinkers.rr.material.color.setHex(0x332200);
+                    }
+                } else {
+                    car.blinkers.fl.material.color.setHex(0x332200);
+                    car.blinkers.fr.material.color.setHex(0x332200);
+                    car.blinkers.rl.material.color.setHex(0x332200);
+                    car.blinkers.rr.material.color.setHex(0x332200);
+                }
             }
 
             // Agar mashina o'tib ketsa, oldinga toza masofada retsirkulyatsiya bo'ladi
             if (car.s < p.s - 25) {
                 car.s = p.s + 90 + Math.random() * 40;
                 car.d = (Math.random() > 0.5 ? 3.2 : -3.2);
+                car.targetLaneD = car.d;
+                car.isChangingLane = false;
+                car.blinkerTimer = 0;
+                car.changeCooldown = 140 + Math.floor(Math.random() * 180);
                 car.hasHorned = false;
+                if (car.blinkers) {
+                    car.blinkers.fl.material.color.setHex(0x332200);
+                    car.blinkers.fr.material.color.setHex(0x332200);
+                    car.blinkers.rl.material.color.setHex(0x332200);
+                    car.blinkers.rr.material.color.setHex(0x332200);
+                }
             }
 
             // Mashina pozitsiyasi va aylanishini egri yo'lga moslash

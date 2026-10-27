@@ -120,6 +120,64 @@ html, body {
     filter: drop-shadow(0 2px 2px rgba(243, 156, 18, 0.5));
 }
 
+/* Mushukcha Quvvati (Stamina Shkalasi) */
+.stamina-pill {
+    background: rgba(15, 23, 42, 0.92);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
+    padding: 5px 10px;
+    gap: 6px;
+}
+
+.stamina-icon {
+    color: #38bdf8;
+    filter: drop-shadow(0 0 6px #38bdf8);
+}
+
+.stamina-meter-wrap {
+    width: 65px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    position: relative;
+}
+
+.stamina-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #00cec9, #0984e3);
+    border-radius: 8px;
+    transition: width 0.08s ease, background 0.2s ease;
+    box-shadow: 0 0 8px rgba(0, 206, 201, 0.6);
+}
+
+.stamina-text {
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-family: monospace;
+    min-width: 32px;
+    color: #e2e8f0;
+}
+
+.stamina-low .stamina-bar-fill {
+    background: linear-gradient(90deg, #ff7675, #d63031) !important;
+    box-shadow: 0 0 10px rgba(214, 48, 49, 0.85);
+    animation: stamina-blink 0.4s infinite alternate;
+}
+
+.stamina-low .stamina-icon {
+    color: #ff7675;
+    animation: pulse-glow 0.5s infinite alternate;
+}
+
+@keyframes stamina-blink {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
 /* Poyga Spidometri */
 .speed-pill {
     background: linear-gradient(135deg, #1e272e, #2f3640);
@@ -805,6 +863,20 @@ html, body {
         border-radius: 20px;
     }
 
+    .stamina-pill {
+        padding: 3px 7px;
+    }
+
+    .stamina-meter-wrap {
+        width: 48px;
+        height: 8px;
+    }
+
+    .stamina-text {
+        font-size: 0.72rem;
+        min-width: 24px;
+    }
+
     .hud-symbol {
         font-size: 1.05rem;
     }
@@ -854,6 +926,9 @@ html, body {
     .hud-pill {
         padding: 3px 7px;
         font-size: 0.78rem;
+    }
+    .stamina-meter-wrap {
+        width: 38px;
     }
 }
 

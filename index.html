@@ -25,6 +25,14 @@
                     <span class="hud-symbol coin-icon">🪙</span>
                     <span id="coin-display">0</span>
                 </div>
+                <!-- Mushukcha Quvvati (Stamina / Nitro Shkalasi) -->
+                <div id="stamina-pill" class="hud-pill stamina-pill" title="Mushukcha Quvvati (Stamina)">
+                    <span class="hud-symbol stamina-icon">⚡</span>
+                    <div class="stamina-meter-wrap">
+                        <div id="stamina-bar" class="stamina-bar-fill" style="width: 100%;"></div>
+                    </div>
+                    <span id="stamina-text" class="stamina-text">100%</span>
+                </div>
                 <div class="hud-pill score-pill desktop-only" title="Ball">
                     <span class="hud-symbol">⭐</span>
                     <span id="score-display">0</span>
@@ -76,6 +84,10 @@
                             <span class="drawer-stat-value"><span id="drawer-speed-val">0</span> km/h</span>
                         </div>
                         <div class="drawer-stat-item">
+                            <span class="drawer-stat-label">🔋 Quvvat (Stamina):</span>
+                            <span id="drawer-stamina-val" class="drawer-stat-value">100%</span>
+                        </div>
+                        <div class="drawer-stat-item">
                             <span class="drawer-stat-label">⭐ Ball:</span>
                             <span class="drawer-stat-value"><span id="drawer-score-val">0</span></span>
                         </div>
@@ -123,16 +135,16 @@
                             <span><b>Egri Ko'chalar:</b> O'ng va chapga burilish</span>
                         </div>
                         <div class="inst-item">
-                            <span class="inst-icon">🐾</span>
-                            <span><b>Fizika:</b> Inersiya, sakrash, drift</span>
-                        </div>
-                        <div class="inst-item">
-                            <span class="inst-icon">🕹️</span>
-                            <span><b>Boshqaruv:</b> <b>◀ ▶</b> burilish, <b>⚡</b> nitro, <b>🦘</b> sakrash</span>
+                            <span class="inst-icon">⚡</span>
+                            <span><b>Stamina & Nitro:</b> Gaz staminani sarflaydi, <b>🐟 baliqlar</b> quvvatlaydi!</span>
                         </div>
                         <div class="inst-item">
                             <span class="inst-icon">🚗</span>
-                            <span><b>Xavf:</b> Mashinalardan va itlardan ehtiyot bo'ling!</span>
+                            <span><b>Aqlli Trassa:</b> Mashinalar povorotnik bilan polosa o'zgartiradi!</span>
+                        </div>
+                        <div class="inst-item">
+                            <span class="inst-icon">🐕</span>
+                            <span><b>Xavfli Itlar:</b> Mushukni ko'rganda yo'lga sakrab quvlaydi!</span>
                         </div>
                     </div>
                 </div>
