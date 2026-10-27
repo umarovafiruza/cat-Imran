@@ -343,6 +343,39 @@ class SoundController {
             osc.stop(start + 0.2);
         });
     }
+
+    playSiren() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(650, now);
+        osc.frequency.linearRampToValueAtTime(950, now + 0.18);
+        osc.frequency.linearRampToValueAtTime(650, now + 0.36);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.36);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.36);
+    }
+
+    playSlip() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(75, now + 0.22);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.22);
+    }
 }
 
 // ==========================================
@@ -525,184 +558,322 @@ class CurveTrack {
 
         return group;
     }
+
+    // F1 Poyga Bordyurlari (Checkered Red & White Curbs - 60 FPS Vertex Colors)
+    buildCurbs(curbW = 0.45, curbH = 0.08) {
+        const group = new THREE.Group();
+        [-1, 1].forEach(side => {
+            const vertexCount = this.samples.length * 2;
+            const positions = new Float32Array(vertexCount * 3);
+            const colors = new Float32Array(vertexCount * 3);
+            const indices = [];
+
+            const dOuter = side * this.halfWidth;
+            const dInner = side * (this.halfWidth - curbW);
+
+            for (let i = 0; i < this.samples.length; i++) {
+                const { pos, right, s } = this.samples[i];
+                const isRed = Math.floor(s / 2.0) % 2 === 0;
+                const r = isRed ? 0.92 : 0.96;
+                const g = isRed ? 0.18 : 0.96;
+                const b = isRed ? 0.18 : 0.96;
+
+                positions[i * 6 + 0] = pos.x + right.x * dInner;
+                positions[i * 6 + 1] = curbH;
+                positions[i * 6 + 2] = pos.z + right.z * dInner;
+
+                positions[i * 6 + 3] = pos.x + right.x * dOuter;
+                positions[i * 6 + 4] = curbH;
+                positions[i * 6 + 5] = pos.z + right.z * dOuter;
+
+                colors[i * 6 + 0] = r; colors[i * 6 + 1] = g; colors[i * 6 + 2] = b;
+                colors[i * 6 + 3] = r; colors[i * 6 + 4] = g; colors[i * 6 + 5] = b;
+
+                if (i < this.samples.length - 1) {
+                    if (side === 1) {
+                        indices.push(i * 2, i * 2 + 1, (i + 1) * 2);
+                        indices.push(i * 2 + 1, (i + 1) * 2 + 1, (i + 1) * 2);
+                    } else {
+                        indices.push(i * 2, (i + 1) * 2, i * 2 + 1);
+                        indices.push(i * 2 + 1, (i + 1) * 2, (i + 1) * 2 + 1);
+                    }
+                }
+            }
+
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geo.setIndex(indices);
+            geo.computeVertexNormals();
+
+            const mat = new THREE.MeshBasicMaterial({ vertexColors: true });
+            group.add(new THREE.Mesh(geo, mat));
+        });
+
+        return group;
+    }
+
+    // Yo'ldagi oq uzuk chiziqlar (Dashed Lane Markings)
+    buildLaneDashes(laneOffset = 0.0) {
+        const stripW = 0.10;
+        const positions = [];
+        const indices = [];
+        let vIdx = 0;
+
+        for (let i = 0; i < this.samples.length - 1; i++) {
+            const { pos: p1, right: r1, s: s1 } = this.samples[i];
+            const { pos: p2, right: r2 } = this.samples[i + 1];
+
+            // 3 metr oq chiziq, 3 metr bo'shliq
+            if (Math.floor(s1 / 3.0) % 2 === 0) {
+                positions.push(
+                    p1.x + r1.x * (laneOffset - stripW), 0.02, p1.z + r1.z * (laneOffset - stripW),
+                    p1.x + r1.x * (laneOffset + stripW), 0.02, p1.z + r1.z * (laneOffset + stripW),
+                    p2.x + r2.x * (laneOffset - stripW), 0.02, p2.z + r2.z * (laneOffset - stripW),
+                    p2.x + r2.x * (laneOffset + stripW), 0.02, p2.z + r2.z * (laneOffset + stripW)
+                );
+                indices.push(vIdx, vIdx + 1, vIdx + 2, vIdx + 1, vIdx + 3, vIdx + 2);
+                vIdx += 4;
+            }
+        }
+
+        if (positions.length === 0) return new THREE.Group();
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setIndex(indices);
+        geo.computeVertexNormals();
+        const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        return new THREE.Mesh(geo, mat);
+    }
 }
 
 // ==========================================
 // 3. 10 TA BOSQICH SOZLAMALARI VA EGRI YO'L MARSHRUTLARI
-// O'ng va chapga burilishlar, tartibli transport
+// Har bir bosqich o'ziga xos tematikasi, to'siqlari va qiyinchilik darajasiga ega
 // ==========================================
 const LEVEL_CONFIGS = [
     {
         id: 1,
-        title: "1-Bosqich: Kichik O'ng Burilish (Shahar Cheti)",
+        title: "1-Bosqich: Quyoshli Shaharcha",
+        subtitle: "Boshlang'ich trassa — 400m | Keng ko'cha va tinch harakat",
+        stars: 1,
+        distance: 400,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -60),
-            new THREE.Vector3(18, 0, -140),
-            new THREE.Vector3(26, 0, -220),
-            new THREE.Vector3(12, 0, -290),
-            new THREE.Vector3(0, 0, -350)
+            new THREE.Vector3(16, 0, -140),
+            new THREE.Vector3(24, 0, -220),
+            new THREE.Vector3(10, 0, -300),
+            new THREE.Vector3(0, 0, -360)
         ],
-        skyColor: 0x0a1128, fogColor: 0x0f1c3f, roadColor: 0x242831,
-        dogCount: 3, dogSpeed: 0.10, dogVision: 18, chasingDogs: false,
-        carCount: 4, carSpeed: 0.32, aiTraffic: false, laneChangeProb: 0.0,
+        skyColor: 0x81ecec, fogColor: 0xa8e6cf, roadColor: 0x2d3436,
+        ambientColor: 0xdff9fb, dirColor: 0xffffff, groundColor: 0x27ae60,
+        dogCount: 2, dogSpeed: 0.10, dogVision: 16, chasingDogs: false,
+        carCount: 3, carSpeed: 0.30, aiTraffic: false, laneChangeProb: 0.0, hasPoliceCar: false,
+        coneCount: 0, barrierCount: 0, oilCount: 0,
         coinCount: 22, fishCount: 6, milkCount: 2, starCount: 1, puddleCount: 2
     },
     {
         id: 2,
-        title: "2-Bosqich: Chapga Buriluvchi Tungi Ko'cha",
+        title: "2-Bosqich: Shahar Shossesi",
+        subtitle: "Tezlik sinovi — 460m | Yo'lda birinchi konuslar",
+        stars: 1,
+        distance: 460,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -60),
-            new THREE.Vector3(-20, 0, -150),
-            new THREE.Vector3(-30, 0, -240),
-            new THREE.Vector3(-14, 0, -330),
-            new THREE.Vector3(0, 0, -410)
+            new THREE.Vector3(-18, 0, -150),
+            new THREE.Vector3(-28, 0, -250),
+            new THREE.Vector3(-12, 0, -340),
+            new THREE.Vector3(0, 0, -420)
         ],
-        skyColor: 0x070b19, fogColor: 0x0d1527, roadColor: 0x1e272e,
-        dogCount: 3, dogSpeed: 0.11, dogVision: 20, chasingDogs: false,
-        carCount: 4, carSpeed: 0.35, aiTraffic: false, laneChangeProb: 0.0,
-        coinCount: 26, fishCount: 7, milkCount: 2, starCount: 1, puddleCount: 3
+        skyColor: 0x74b9ff, fogColor: 0xa1c4fd, roadColor: 0x2c3e50,
+        ambientColor: 0xecf0f1, dirColor: 0xfff275, groundColor: 0x218c74,
+        dogCount: 3, dogSpeed: 0.11, dogVision: 18, chasingDogs: false,
+        carCount: 4, carSpeed: 0.34, aiTraffic: false, laneChangeProb: 0.0, hasPoliceCar: false,
+        coneCount: 4, barrierCount: 0, oilCount: 0,
+        coinCount: 26, fishCount: 7, milkCount: 2, starCount: 1, puddleCount: 2
     },
     {
         id: 3,
-        title: "3-Bosqich: Park Xiyoboni (S-simon Egri Yo'l)",
+        title: "3-Bosqich: Kuzgi Xiyobon (S-Egri Yo'l)",
+        subtitle: "Oltin xazonlar — 520m | Moy dog'i & AI manyovrlar",
+        stars: 2,
+        distance: 520,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -60),
             new THREE.Vector3(22, 0, -150),
-            new THREE.Vector3(25, 0, -230),
-            new THREE.Vector3(-18, 0, -330),
-            new THREE.Vector3(-22, 0, -410),
+            new THREE.Vector3(25, 0, -240),
+            new THREE.Vector3(-18, 0, -340),
+            new THREE.Vector3(-22, 0, -420),
             new THREE.Vector3(0, 0, -490)
         ],
-        skyColor: 0x081326, fogColor: 0x0f213d, roadColor: 0x212a36,
-        dogCount: 4, dogSpeed: 0.12, dogVision: 22, chasingDogs: false,
-        carCount: 5, carSpeed: 0.38, aiTraffic: true, laneChangeProb: 0.35,
-        coinCount: 30, fishCount: 8, milkCount: 3, starCount: 2, puddleCount: 3
+        skyColor: 0xf39c12, fogColor: 0xe67e22, roadColor: 0x34495e,
+        ambientColor: 0xfde3a7, dirColor: 0xf39c12, groundColor: 0xd35400,
+        dogCount: 3, dogSpeed: 0.12, dogVision: 20, chasingDogs: false,
+        carCount: 4, carSpeed: 0.37, aiTraffic: true, laneChangeProb: 0.40, hasPoliceCar: false,
+        coneCount: 4, barrierCount: 0, oilCount: 2,
+        coinCount: 30, fishCount: 8, milkCount: 2, starCount: 1, puddleCount: 3
     },
     {
         id: 4,
-        title: "4-Bosqich: Qorong'u Markaz (Keng Burilishlar)",
+        title: "4-Bosqich: Binafsha Shom Bulvari",
+        subtitle: "Shom tushishi — 580m | Povorotnikli mashinalar & to'siqlar",
+        stars: 2,
+        distance: 580,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -70),
-            new THREE.Vector3(-25, 0, -170),
-            new THREE.Vector3(-35, 0, -270),
-            new THREE.Vector3(-15, 0, -370),
-            new THREE.Vector3(15, 0, -460),
-            new THREE.Vector3(0, 0, -540)
+            new THREE.Vector3(-24, 0, -170),
+            new THREE.Vector3(-34, 0, -280),
+            new THREE.Vector3(-14, 0, -380),
+            new THREE.Vector3(16, 0, -470),
+            new THREE.Vector3(0, 0, -550)
         ],
-        skyColor: 0x050a14, fogColor: 0x0d1728, roadColor: 0x1b232e,
-        dogCount: 4, dogSpeed: 0.13, dogVision: 23, chasingDogs: false,
-        carCount: 5, carSpeed: 0.40, aiTraffic: true, laneChangeProb: 0.45,
-        coinCount: 34, fishCount: 9, milkCount: 3, starCount: 2, puddleCount: 4
+        skyColor: 0x2c1654, fogColor: 0x472475, roadColor: 0x221a36,
+        ambientColor: 0x9b59b6, dirColor: 0xf368e0, groundColor: 0x1f1435,
+        dogCount: 4, dogSpeed: 0.13, dogVision: 22, chasingDogs: false,
+        carCount: 5, carSpeed: 0.40, aiTraffic: true, laneChangeProb: 0.50, hasPoliceCar: false,
+        coneCount: 5, barrierCount: 1, oilCount: 2,
+        coinCount: 34, fishCount: 9, milkCount: 3, starCount: 2, puddleCount: 3
     },
     {
         id: 5,
-        title: "5-Bosqich: Shamolli Trassa (Egri-bugri Yo'llar)",
+        title: "5-Bosqich: Tungi Shahar (Quvlovchi Itlar)",
+        subtitle: "Faralar yoqildi — 650m | ⚠️ Dushman itlar yo'lga sakraydi!",
+        stars: 3,
+        distance: 650,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -70),
-            new THREE.Vector3(28, 0, -180),
-            new THREE.Vector3(35, 0, -290),
-            new THREE.Vector3(10, 0, -390),
-            new THREE.Vector3(-25, 0, -490),
-            new THREE.Vector3(0, 0, -590)
+            new THREE.Vector3(26, 0, -180),
+            new THREE.Vector3(34, 0, -290),
+            new THREE.Vector3(12, 0, -400),
+            new THREE.Vector3(-24, 0, -500),
+            new THREE.Vector3(0, 0, -600)
         ],
-        skyColor: 0x040810, fogColor: 0x0a1422, roadColor: 0x18202a,
-        dogCount: 5, dogSpeed: 0.13, dogVision: 24, chasingDogs: true, dogChaseSpeed: 0.25,
-        carCount: 5, carSpeed: 0.42, aiTraffic: true, laneChangeProb: 0.55,
+        skyColor: 0x050a14, fogColor: 0x0d1728, roadColor: 0x18202a,
+        ambientColor: 0x3d5a80, dirColor: 0x90e0ef, groundColor: 0x0a101d,
+        dogCount: 5, dogSpeed: 0.14, dogVision: 24, chasingDogs: true, dogChaseSpeed: 0.26,
+        carCount: 5, carSpeed: 0.42, aiTraffic: true, laneChangeProb: 0.60, hasPoliceCar: false,
+        coneCount: 6, barrierCount: 2, oilCount: 3,
         coinCount: 38, fishCount: 10, milkCount: 3, starCount: 2, puddleCount: 4
     },
     {
         id: 6,
-        title: "6-Bosqich: Tungi Shahar Shossesi",
+        title: "6-Bosqich: Sirpanchiq Trassa",
+        subtitle: "Yomg'ir & Moy dog'lari — 720m | Tormozni to'g'ri ishlating!",
+        stars: 3,
+        distance: 720,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -80),
-            new THREE.Vector3(-30, 0, -200),
-            new THREE.Vector3(-42, 0, -320),
-            new THREE.Vector3(-20, 0, -430),
-            new THREE.Vector3(20, 0, -530),
-            new THREE.Vector3(0, 0, -640)
+            new THREE.Vector3(-28, 0, -200),
+            new THREE.Vector3(-40, 0, -330),
+            new THREE.Vector3(-18, 0, -440),
+            new THREE.Vector3(22, 0, -540),
+            new THREE.Vector3(0, 0, -650)
         ],
-        skyColor: 0x040710, fogColor: 0x0a1120, roadColor: 0x171f28,
+        skyColor: 0x1e272e, fogColor: 0x2f3640, roadColor: 0x151b22,
+        ambientColor: 0x57606f, dirColor: 0x70a1ff, groundColor: 0x12171d,
         dogCount: 5, dogSpeed: 0.14, dogVision: 25, chasingDogs: true, dogChaseSpeed: 0.28,
-        carCount: 6, carSpeed: 0.45, aiTraffic: true, laneChangeProb: 0.65,
-        coinCount: 42, fishCount: 11, milkCount: 4, starCount: 2, puddleCount: 5
+        carCount: 5, carSpeed: 0.44, aiTraffic: true, laneChangeProb: 0.68, hasPoliceCar: false,
+        coneCount: 7, barrierCount: 2, oilCount: 5,
+        coinCount: 42, fishCount: 11, milkCount: 3, starCount: 2, puddleCount: 5
     },
     {
         id: 7,
-        title: "7-Bosqich: Shovqinli Xiyobon (Ketma-ket Burilishlar)",
+        title: "7-Bosqich: Yo'l Ta'mirlash (Katta To'siqlar)",
+        subtitle: "Yo'l to'silgan — 780m | Bitta tor polosa orqali tezkor manyovr",
+        stars: 4,
+        distance: 780,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -80),
-            new THREE.Vector3(30, 0, -200),
-            new THREE.Vector3(38, 0, -320),
-            new THREE.Vector3(-25, 0, -440),
-            new THREE.Vector3(-32, 0, -550),
-            new THREE.Vector3(0, 0, -690)
+            new THREE.Vector3(28, 0, -200),
+            new THREE.Vector3(36, 0, -330),
+            new THREE.Vector3(-24, 0, -450),
+            new THREE.Vector3(-30, 0, -560),
+            new THREE.Vector3(0, 0, -700)
         ],
-        skyColor: 0x03060c, fogColor: 0x090e1a, roadColor: 0x151b22,
-        dogCount: 6, dogSpeed: 0.15, dogVision: 26, chasingDogs: true, dogChaseSpeed: 0.31,
-        carCount: 6, carSpeed: 0.47, aiTraffic: true, laneChangeProb: 0.75,
-        coinCount: 46, fishCount: 12, milkCount: 4, starCount: 3, puddleCount: 5
+        skyColor: 0x192a56, fogColor: 0x273c75, roadColor: 0x171f28,
+        ambientColor: 0x487eb0, dirColor: 0xfbc531, groundColor: 0x101c38,
+        dogCount: 6, dogSpeed: 0.15, dogVision: 26, chasingDogs: true, dogChaseSpeed: 0.30,
+        carCount: 6, carSpeed: 0.46, aiTraffic: true, laneChangeProb: 0.75, hasPoliceCar: false,
+        coneCount: 8, barrierCount: 4, oilCount: 4,
+        coinCount: 46, fishCount: 12, milkCount: 4, starCount: 2, puddleCount: 4
     },
     {
         id: 8,
-        title: "8-Bosqich: Katta Shahar Aylanma Yo'li",
+        title: "8-Bosqich: Sirenali Tezkor Shosse",
+        subtitle: "🚨 Shoshilinch Sirena — 840m | Tezyurar politsiya avtomobili!",
+        stars: 4,
+        distance: 840,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -80),
-            new THREE.Vector3(-32, 0, -210),
-            new THREE.Vector3(-45, 0, -340),
-            new THREE.Vector3(0, 0, -460),
-            new THREE.Vector3(35, 0, -580),
-            new THREE.Vector3(0, 0, -730)
+            new THREE.Vector3(-30, 0, -210),
+            new THREE.Vector3(-42, 0, -350),
+            new THREE.Vector3(0, 0, -470),
+            new THREE.Vector3(32, 0, -590),
+            new THREE.Vector3(0, 0, -740)
         ],
-        skyColor: 0x03050a, fogColor: 0x070c16, roadColor: 0x141a20,
-        dogCount: 6, dogSpeed: 0.16, dogVision: 27, chasingDogs: true, dogChaseSpeed: 0.34,
-        carCount: 6, carSpeed: 0.50, aiTraffic: true, laneChangeProb: 0.82,
+        skyColor: 0x090a0f, fogColor: 0x131722, roadColor: 0x141a20,
+        ambientColor: 0x34495e, dirColor: 0xe74c3c, groundColor: 0x0a0c12,
+        dogCount: 6, dogSpeed: 0.16, dogVision: 27, chasingDogs: true, dogChaseSpeed: 0.32,
+        carCount: 6, carSpeed: 0.48, aiTraffic: true, laneChangeProb: 0.82, hasPoliceCar: true,
+        coneCount: 8, barrierCount: 4, oilCount: 5,
         coinCount: 50, fishCount: 13, milkCount: 4, starCount: 3, puddleCount: 5
     },
     {
         id: 9,
-        title: "9-Bosqich: Yarim Tungi Xavfli Egri Trassa",
+        title: "9-Bosqich: Bo'ronli Yarim Tun",
+        subtitle: "Ekstremal Egri Trassa — 900m | Tezkor to'dalar va quvlovchilar",
+        stars: 5,
+        distance: 900,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -80),
-            new THREE.Vector3(35, 0, -210),
-            new THREE.Vector3(48, 0, -350),
-            new THREE.Vector3(15, 0, -470),
-            new THREE.Vector3(-35, 0, -590),
-            new THREE.Vector3(-25, 0, -690),
-            new THREE.Vector3(0, 0, -770)
+            new THREE.Vector3(34, 0, -210),
+            new THREE.Vector3(46, 0, -350),
+            new THREE.Vector3(14, 0, -480),
+            new THREE.Vector3(-34, 0, -600),
+            new THREE.Vector3(-24, 0, -700),
+            new THREE.Vector3(0, 0, -780)
         ],
-        skyColor: 0x020306, fogColor: 0x060910, roadColor: 0x12171d,
-        dogCount: 7, dogSpeed: 0.17, dogVision: 28, chasingDogs: true, dogChaseSpeed: 0.36,
-        carCount: 7, carSpeed: 0.52, aiTraffic: true, laneChangeProb: 0.90,
-        coinCount: 54, fishCount: 14, milkCount: 5, starCount: 3, puddleCount: 6
+        skyColor: 0x03050a, fogColor: 0x070c16, roadColor: 0x12171d,
+        ambientColor: 0x2c3e50, dirColor: 0x00d2d3, groundColor: 0x06080e,
+        dogCount: 7, dogSpeed: 0.17, dogVision: 28, chasingDogs: true, dogChaseSpeed: 0.35,
+        carCount: 7, carSpeed: 0.52, aiTraffic: true, laneChangeProb: 0.90, hasPoliceCar: true,
+        coneCount: 10, barrierCount: 5, oilCount: 6,
+        coinCount: 55, fishCount: 15, milkCount: 4, starCount: 3, puddleCount: 6
     },
     {
         id: 10,
-        title: "10-Bosqich: 🏁 AFSONAVIY SHAHAR POYGASI (Katta Burilishlar & Zich Trassa)",
+        title: "10-Bosqich: 🏁 AFSONAVIY CHEMPIONLAR FINALI",
+        subtitle: "1000 METR! Barcha to'siqlar, manyovrlar va eng yuqori tezlik!",
+        stars: 5,
+        distance: 1000,
         trackPoints: [
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -80),
-            new THREE.Vector3(30, 0, -180),
-            new THREE.Vector3(46, 0, -290),
-            new THREE.Vector3(30, 0, -400),
-            new THREE.Vector3(0, 0, -500),
-            new THREE.Vector3(-38, 0, -600),
-            new THREE.Vector3(-32, 0, -700),
-            new THREE.Vector3(-10, 0, -770),
-            new THREE.Vector3(0, 0, -830)
+            new THREE.Vector3(32, 0, -180),
+            new THREE.Vector3(48, 0, -300),
+            new THREE.Vector3(28, 0, -420),
+            new THREE.Vector3(0, 0, -520),
+            new THREE.Vector3(-36, 0, -620),
+            new THREE.Vector3(-30, 0, -720),
+            new THREE.Vector3(-10, 0, -790),
+            new THREE.Vector3(0, 0, -860)
         ],
-        skyColor: 0x020205, fogColor: 0x05070e, roadColor: 0x11151a,
+        skyColor: 0x020204, fogColor: 0x05060b, roadColor: 0x101317,
+        ambientColor: 0x2f3640, dirColor: 0xffbe0b, groundColor: 0x040507,
         dogCount: 7, dogSpeed: 0.18, dogVision: 30, chasingDogs: true, dogChaseSpeed: 0.38,
-        carCount: 7, carSpeed: 0.55, aiTraffic: true, laneChangeProb: 0.98,
-        coinCount: 65, fishCount: 16, milkCount: 5, starCount: 4, puddleCount: 6
+        carCount: 7, carSpeed: 0.55, aiTraffic: true, laneChangeProb: 0.95, hasPoliceCar: true,
+        coneCount: 12, barrierCount: 6, oilCount: 7,
+        coinCount: 65, fishCount: 18, milkCount: 5, starCount: 4, puddleCount: 6
     }
 ];
 
@@ -1126,19 +1297,40 @@ const ModelFactory = {
                     group.add(win);
                 }
             }
+        } else if (typeIndex % 4 === 2) {
+            // Zamonaviy Ko'p Qavatli Bino (Modern Skyscraper / Tower)
+            const bodyGeo = new THREE.BoxGeometry(5.4, 9.5, 4.6);
+            const towerMat = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
+            const body = new THREE.Mesh(bodyGeo, towerMat);
+            body.position.y = 4.75;
+            group.add(body);
+
+            // Shisha panellar (Neon Windows)
+            const winNeonMat = new THREE.MeshBasicMaterial({ color: (typeIndex % 2 === 0 ? 0x00d2d3 : 0xffbe0b) });
+            for (let floor = 0; floor < 5; floor++) {
+                for (let col = -1.6; col <= 1.6; col += 1.6) {
+                    const win = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.1), winNeonMat);
+                    win.position.set(col, 1.6 + floor * 1.6, 2.32);
+                    group.add(win);
+                }
+            }
         } else {
-            // Park Daraxti va Skameyka
+            // Park Archa / Daraxt va Skameyka
             const trunkGeo = new THREE.CylinderGeometry(0.2, 0.28, 3.2, 5);
             const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5d4037 });
             const trunk = new THREE.Mesh(trunkGeo, trunkMat);
             trunk.position.set(0, 1.6, 0);
             group.add(trunk);
 
-            const crownGeo = new THREE.SphereGeometry(1.6, 6, 6);
-            const leafMat = new THREE.MeshLambertMaterial({ color: 0x2ed573 });
-            const crown = new THREE.Mesh(crownGeo, leafMat);
-            crown.position.set(0, 3.8, 0);
-            group.add(crown);
+            // 2 qavatli archa yaprog'i
+            const crownMat = new THREE.MeshLambertMaterial({ color: (typeIndex % 2 === 0 ? 0x2ed573 : 0x20bf6b) });
+            const cone1 = new THREE.Mesh(new THREE.ConeGeometry(1.6, 2.4, 6), crownMat);
+            cone1.position.set(0, 3.2, 0);
+            group.add(cone1);
+
+            const cone2 = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.0, 6), crownMat);
+            cone2.position.set(0, 4.4, 0);
+            group.add(cone2);
 
             // Skameyka
             const benchGeo = new THREE.BoxGeometry(1.6, 0.12, 0.5);
@@ -1352,6 +1544,120 @@ const ModelFactory = {
         puddle.rotation.x = -Math.PI / 2;
         puddle.position.y = 0.02;
         return puddle;
+    },
+
+    // 9. Yo'l Konusi (Traffic Cone - Sakrab o'tish mumkin)
+    createTrafficCone() {
+        const group = new THREE.Group();
+        const baseGeo = new THREE.BoxGeometry(0.7, 0.08, 0.7);
+        const baseMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.y = 0.04;
+        group.add(base);
+
+        const coneGeo = new THREE.ConeGeometry(0.28, 0.85, 6);
+        const coneMat = new THREE.MeshLambertMaterial({ color: 0xff6b35 });
+        const cone = new THREE.Mesh(coneGeo, coneMat);
+        cone.position.y = 0.46;
+        group.add(cone);
+
+        const stripeGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.22, 6);
+        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+        stripe.position.y = 0.46;
+        group.add(stripe);
+
+        return group;
+    },
+
+    // 10. Yo'l Ta'mirlash To'sig'i (Construction Road Barrier - Butun polosa)
+    createRoadBarrier() {
+        const group = new THREE.Group();
+        const redMat = new THREE.MeshLambertMaterial({ color: 0xff4757 });
+        const whiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const orangeMat = new THREE.MeshBasicMaterial({ color: 0xffa502 });
+
+        // Oyoqlar
+        const legGeo = new THREE.BoxGeometry(0.12, 1.1, 0.12);
+        [-1.2, 1.2].forEach(lx => {
+            const leg = new THREE.Mesh(legGeo, redMat);
+            leg.position.set(lx, 0.55, 0);
+            group.add(leg);
+
+            const footGeo = new THREE.BoxGeometry(0.4, 0.08, 0.7);
+            const foot = new THREE.Mesh(footGeo, redMat);
+            foot.position.set(lx, 0.04, 0);
+            group.add(foot);
+        });
+
+        // 2 ta qator taxta
+        [0.45, 0.85].forEach(by => {
+            const boardGeo = new THREE.BoxGeometry(2.6, 0.26, 0.08);
+            const board = new THREE.Mesh(boardGeo, redMat);
+            board.position.set(0, by, 0);
+            group.add(board);
+
+            // Oq xavfsizlik chiziqlari
+            [-0.8, -0.25, 0.25, 0.8].forEach(sx => {
+                const stripeGeo = new THREE.BoxGeometry(0.25, 0.28, 0.09);
+                const stripe = new THREE.Mesh(stripeGeo, whiteMat);
+                stripe.position.set(sx, by, 0);
+                group.add(stripe);
+            });
+        });
+
+        // Sariq ogohlantirish chirog'i
+        const lampGeo = new THREE.BoxGeometry(0.24, 0.24, 0.2);
+        const lamp = new THREE.Mesh(lampGeo, orangeMat);
+        lamp.position.set(0, 1.15, 0);
+        group.add(lamp);
+
+        return group;
+    },
+
+    // 11. Moy Dog'i (Oil Slick - Sirpanish)
+    createOilSlick() {
+        const geo = new THREE.CircleGeometry(1.4, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x111625, transparent: true, opacity: 0.85 });
+        const slick = new THREE.Mesh(geo, mat);
+        slick.rotation.x = -Math.PI / 2;
+        slick.position.y = 0.025;
+        return slick;
+    },
+
+    // 12. Tezyurar Sirenali Politsiya Mashinasi (Emergency Police Cruiser)
+    createPoliceCar() {
+        const carObj = this.createCar(0x1e272e);
+        const group = carObj.mesh;
+
+        // Oq yon eshiklar
+        const doorGeo = new THREE.BoxGeometry(1.65, 0.5, 0.05);
+        const doorMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        [-0.85, 0.85].forEach(dx => {
+            const door = new THREE.Mesh(doorGeo, doorMat);
+            door.position.set(dx, 0.65, 0);
+            door.rotation.y = Math.PI / 2;
+            group.add(door);
+        });
+
+        // Tomdagi Sirena (Police Lightbar)
+        const barBase = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.08, 0.2), new THREE.MeshLambertMaterial({ color: 0x222222 }));
+        barBase.position.set(0, 1.48, -0.2);
+        group.add(barBase);
+
+        const redStrobe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.18), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        redStrobe.position.set(-0.25, 1.56, -0.2);
+        group.add(redStrobe);
+
+        const blueStrobe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.18), new THREE.MeshBasicMaterial({ color: 0x0088ff }));
+        blueStrobe.position.set(0.25, 1.56, -0.2);
+        group.add(blueStrobe);
+
+        return {
+            ...carObj,
+            isPolice: true,
+            strobes: { red: redStrobe, blue: blueStrobe }
+        };
     }
 };
 
@@ -1456,7 +1762,8 @@ class GameEngine3D {
             maxStamina: 100,
             staminaDrainRate: 0.52,
             staminaRegenRate: 0.20,
-            isExhausted: false
+            isExhausted: false,
+            slipTimer: 0
         };
 
         // Meshlar va massivlar
@@ -1467,6 +1774,8 @@ class GameEngine3D {
         this.roadMesh = null;
         this.centerStrip = null;
         this.sidewalks = null;
+        this.curbs = null;
+        this.laneDashes = null;
         this.finishGate = null;
         this.homeMesh = null;
 
@@ -1474,6 +1783,9 @@ class GameEngine3D {
         this.dogs = [];
         this.cars = [];
         this.puddles = [];
+        this.cones = [];
+        this.barriers = [];
+        this.oilSlicks = [];
         this.decorGroup = new THREE.Group();
         this.scene.add(this.decorGroup);
 
@@ -1483,6 +1795,7 @@ class GameEngine3D {
         this.lastFpsUpdate = performance.now();
 
         this.initDOMElements();
+        this.populateLevelGrid();
         this.bindEvents();
         this.loadLevel(0);
         this.setGameState("MENU");
@@ -1508,6 +1821,15 @@ class GameEngine3D {
             fpsCounter: document.getElementById("fps-counter"),
             soundBtn: document.getElementById("sound-btn"),
             pauseBtn: document.getElementById("pause-btn"),
+
+            levelIntroCard: document.getElementById("level-intro-card"),
+            introLevelTitle: document.getElementById("intro-level-title"),
+            introLevelSub: document.getElementById("intro-level-sub"),
+            levelSelectModal: document.getElementById("level-select-modal"),
+            levelGrid: document.getElementById("level-grid"),
+            openLevelSelectBtn: document.getElementById("open-level-select-btn"),
+            drawerLevelSelectBtn: document.getElementById("drawer-level-select-btn"),
+            closeLevelSelectBtn: document.getElementById("close-level-select-btn"),
 
             burgerBtn: document.getElementById("burger-btn"),
             burgerDrawer: document.getElementById("burger-drawer"),
@@ -1723,6 +2045,25 @@ class GameEngine3D {
 
         if (this.ui.pauseBtn) this.ui.pauseBtn.addEventListener("click", () => this.togglePause());
 
+        if (this.ui.openLevelSelectBtn) {
+            bindActionBtn(this.ui.openLevelSelectBtn, () => {
+                this.populateLevelGrid();
+                if (this.ui.levelSelectModal) this.ui.levelSelectModal.classList.remove("hidden");
+            });
+        }
+        if (this.ui.drawerLevelSelectBtn) {
+            bindActionBtn(this.ui.drawerLevelSelectBtn, () => {
+                closeDrawer();
+                this.populateLevelGrid();
+                if (this.ui.levelSelectModal) this.ui.levelSelectModal.classList.remove("hidden");
+            });
+        }
+        if (this.ui.closeLevelSelectBtn) {
+            bindActionBtn(this.ui.closeLevelSelectBtn, () => {
+                if (this.ui.levelSelectModal) this.ui.levelSelectModal.classList.add("hidden");
+            });
+        }
+
         bindActionBtn(this.ui.startHardcoreBtn, () => this.startHardcoreGame());
         bindActionBtn(this.ui.startBtn, () => this.startNewGame());
         bindActionBtn(this.ui.resumeBtn, () => this.togglePause());
@@ -1730,6 +2071,44 @@ class GameEngine3D {
         bindActionBtn(this.ui.nextLevelBtn, () => this.startNextLevel());
         bindActionBtn(this.ui.restartBtn, () => this.startNewGame());
         bindActionBtn(this.ui.playAgainBtn, () => this.startNewGame());
+    }
+
+    populateLevelGrid() {
+        if (!this.ui.levelGrid) return;
+        this.ui.levelGrid.innerHTML = "";
+        LEVEL_CONFIGS.forEach((lvl, idx) => {
+            const btn = document.createElement("button");
+            btn.className = `level-card-btn ${idx === this.currentLevelIndex ? 'active-level' : ''}`;
+            let starStr = "";
+            for (let s = 0; s < (lvl.stars || 1); s++) starStr += "⭐";
+
+            btn.innerHTML = `
+                <span class="level-card-num">${lvl.id}</span>
+                <span class="level-card-title">${lvl.title.split(':')[1] || lvl.title}</span>
+                <span class="level-card-dist">${Math.round(lvl.distance || 450)}m</span>
+                <span class="level-card-stars">${starStr}</span>
+            `;
+            btn.addEventListener("click", () => {
+                this.sound.init();
+                this.loadLevel(idx);
+                this.setGameState("PLAYING");
+                if (this.ui.levelSelectModal) this.ui.levelSelectModal.classList.add("hidden");
+                if (this.ui.burgerDrawer) this.ui.burgerDrawer.classList.add("hidden");
+                if (this.ui.menuScreen) this.ui.menuScreen.classList.add("hidden");
+            });
+            this.ui.levelGrid.appendChild(btn);
+        });
+    }
+
+    showLevelBanner(title, subtitle) {
+        if (!this.ui.levelIntroCard) return;
+        if (this.ui.introLevelTitle) this.ui.introLevelTitle.textContent = title;
+        if (this.ui.introLevelSub) this.ui.introLevelSub.textContent = subtitle || "";
+
+        this.ui.levelIntroCard.classList.remove("hidden");
+        this.ui.levelIntroCard.style.animation = 'none';
+        void this.ui.levelIntroCard.offsetWidth;
+        this.ui.levelIntroCard.style.animation = '';
     }
 
     syncDrawerStats() {
@@ -1754,9 +2133,12 @@ class GameEngine3D {
 
         this.clearLevel();
 
-        // Fon va Tuman
+        // Fon va Tuman (Har bir bosqichning o'ziga xos atmosferasi)
         this.scene.background = new THREE.Color(cfg.skyColor);
         this.scene.fog = new THREE.Fog(cfg.fogColor, 40, 160);
+
+        if (this.ambientLight && cfg.ambientColor) this.ambientLight.color.setHex(cfg.ambientColor);
+        if (this.dirLight && cfg.dirColor) this.dirLight.color.setHex(cfg.dirColor);
 
         // 1. Egri Yo'l Sistemi (Spline Track)
         this.track = new CurveTrack(cfg.trackPoints, 12.0);
@@ -1765,9 +2147,17 @@ class GameEngine3D {
         this.roadMesh = this.track.buildRoadMesh(cfg.roadColor);
         this.scene.add(this.roadMesh);
 
+        // F1 Poyga Bordyurlari (Checkered Red & White Curbs - 60 FPS Vertex Colors)
+        this.curbs = this.track.buildCurbs();
+        this.scene.add(this.curbs);
+
         // Markaziy sariq chiziq
         this.centerStrip = this.track.buildCenterStrip();
         this.scene.add(this.centerStrip);
+
+        // Yo'l oq uzuk chiziqlari (Dashed Lane Markings)
+        this.laneDashes = this.track.buildLaneDashes();
+        this.scene.add(this.laneDashes);
 
         // Trotuarlar (Sidewalks)
         this.sidewalks = this.track.buildSidewalks();
@@ -1775,7 +2165,7 @@ class GameEngine3D {
 
         // Keng zamin maysazori
         const groundGeo = new THREE.PlaneGeometry(600, 600);
-        const groundMat = new THREE.MeshLambertMaterial({ color: 0x192a1e });
+        const groundMat = new THREE.MeshLambertMaterial({ color: cfg.groundColor || 0x192a1e });
         this.groundMesh = new THREE.Mesh(groundGeo, groundMat);
         this.groundMesh.rotation.x = -Math.PI / 2;
         this.groundMesh.position.y = -0.05;
@@ -1801,6 +2191,7 @@ class GameEngine3D {
         this.player.stamina = 100;
         this.player.maxStamina = 100;
         this.player.isExhausted = false;
+        this.player.slipTimer = 0;
 
         const startPt = this.track.getPoint(this.player.s, this.player.d, 0);
         this.catObj.mesh.position.copy(startPt);
@@ -1820,7 +2211,6 @@ class GameEngine3D {
         this.homeMesh = ModelFactory.createHome();
         const houseD = 12.0; // Yo'l o'rtasida emas, o'ng tomondagi chekada
         this.homeMesh.position.copy(this.track.getPoint(finishS, houseD, 0));
-        // Uyning yuzi yo'l tomonga qaraydi
         this.homeMesh.rotation.y = Math.atan2(finishFrame.tangent.x, finishFrame.tangent.z) - Math.PI / 2;
         this.scene.add(this.homeMesh);
 
@@ -1828,11 +2218,10 @@ class GameEngine3D {
         const trackLen = this.track.length;
         const usableDist = trackLen - 45;
 
-        // Oltin tangalar (yo'l burilishlariga mos arkada)
+        // Oltin tangalar
         const coinStep = usableDist / cfg.coinCount;
         for (let i = 0; i < cfg.coinCount; i++) {
             const s = 15 + i * coinStep;
-            // Arc bo'ylab tebranish
             const d = Math.sin(i * 0.45) * 2.8;
             const coin = ModelFactory.createCoin();
             coin.position.copy(this.track.getPoint(s, d, 0));
@@ -1840,7 +2229,7 @@ class GameEngine3D {
             this.items.push({ mesh: coin, type: "coin", s, d, collected: false });
         }
 
-        // Baliqlar (+15 ball)
+        // Baliqlar (+15 ball & +45 stamina)
         const fishStep = usableDist / cfg.fishCount;
         for (let i = 0; i < cfg.fishCount; i++) {
             const s = 25 + i * fishStep;
@@ -1851,7 +2240,7 @@ class GameEngine3D {
             this.items.push({ mesh: fish, type: "fish", s, d, collected: false });
         }
 
-        // Jon beruvchi sut (+1 jon)
+        // Jon beruvchi sut (+1 jon & to'liq stamina)
         for (let i = 0; i < cfg.milkCount; i++) {
             const s = 40 + (i + 1) * (usableDist / (cfg.milkCount + 1));
             const milk = ModelFactory.createMilk();
@@ -1879,6 +2268,49 @@ class GameEngine3D {
             this.puddles.push({ mesh: puddle, s, d });
         }
 
+        // 4.5. Yo'l Konuslari (Sakrab o'tish mumkin)
+        if (cfg.coneCount) {
+            const coneStep = usableDist / cfg.coneCount;
+            for (let i = 0; i < cfg.coneCount; i++) {
+                const s = 30 + i * coneStep;
+                const d = (i % 2 === 0 ? -1.6 : 1.6);
+                const cone = ModelFactory.createTrafficCone();
+                cone.position.copy(this.track.getPoint(s, d, 0));
+                const frame = this.track.getFrame(s);
+                cone.rotation.y = Math.atan2(frame.tangent.x, frame.tangent.z);
+                this.scene.add(cone);
+                this.cones.push({ mesh: cone, s, d, hit: false, jumped: false });
+            }
+        }
+
+        // 4.6. Yo'l Ta'mirlash To'siqlari (Construction Road Barriers)
+        if (cfg.barrierCount) {
+            const barStep = usableDist / cfg.barrierCount;
+            for (let i = 0; i < cfg.barrierCount; i++) {
+                const s = 65 + i * barStep;
+                const d = (i % 2 === 0 ? -3.2 : 3.2); // Butun bitta polosani to'sadi
+                const barrier = ModelFactory.createRoadBarrier();
+                barrier.position.copy(this.track.getPoint(s, d, 0));
+                const frame = this.track.getFrame(s);
+                barrier.rotation.y = Math.atan2(frame.tangent.x, frame.tangent.z);
+                this.scene.add(barrier);
+                this.barriers.push({ mesh: barrier, s, d });
+            }
+        }
+
+        // 4.7. Moy Dog'lari (Oil Slicks - Sirpanish)
+        if (cfg.oilCount) {
+            const oilStep = usableDist / cfg.oilCount;
+            for (let i = 0; i < cfg.oilCount; i++) {
+                const s = 45 + i * oilStep;
+                const d = (i % 2 === 0 ? -2.2 : 2.2);
+                const slick = ModelFactory.createOilSlick();
+                slick.position.copy(this.track.getPoint(s, d, 0.02));
+                this.scene.add(slick);
+                this.oilSlicks.push({ mesh: slick, s, d });
+            }
+        }
+
         // 5. Dushman Itlar (Trotuarda patrullik qiladi)
         for (let i = 0; i < cfg.dogCount; i++) {
             const s = 45 + (i + 1) * (usableDist / (cfg.dogCount + 1));
@@ -1902,7 +2334,7 @@ class GameEngine3D {
             });
         }
 
-        // 6. TARTIBLI TRANSPORT (Mashinalar soni kamaytirilgan: 4 tadan 7 tagacha)
+        // 6. TARTIBLI TRANSPORT (Mashinalar soni: 3 tadan 7 tagacha)
         // Ikki polosada bir tekis masofada harakatlanadi
         const carCount = cfg.carCount;
         const carSpacing = (usableDist - 50) / carCount;
@@ -1910,8 +2342,9 @@ class GameEngine3D {
         for (let i = 0; i < carCount; i++) {
             const s = 50 + i * carSpacing;
             const laneD = (i % 2 === 0 ? -3.2 : 3.2); // Chap yoki o'ng polosa
-            const isTruck = (i % 3 === 0);
-            const vehicle = isTruck ? ModelFactory.createTruck() : ModelFactory.createCar();
+            const isPolice = cfg.hasPoliceCar && (i === 0);
+            const isTruck = !isPolice && (i % 3 === 0);
+            const vehicle = isPolice ? ModelFactory.createPoliceCar() : (isTruck ? ModelFactory.createTruck() : ModelFactory.createCar());
 
             const frame = this.track.getFrame(s);
             vehicle.mesh.position.copy(this.track.getPoint(s, laneD, 0));
@@ -1923,7 +2356,7 @@ class GameEngine3D {
                 s,
                 d: laneD,
                 laneD,
-                speed: cfg.carSpeed * 0.75, // O'lchovli xavfsiz tezlik
+                speed: (isPolice ? cfg.carSpeed * 1.15 : cfg.carSpeed * 0.75),
                 hasHorned: false,
                 isChangingLane: false,
                 targetLaneD: laneD,
@@ -1934,6 +2367,9 @@ class GameEngine3D {
 
         // 7. Atrofdagi Shahar Dekoratsiyalari (Ko'cha chiroqlari va binolar)
         this.buildCityDecorations();
+
+        // 8. Bosqich Title Card animatsiyasi
+        this.showLevelBanner(cfg.title, cfg.subtitle);
 
         this.updateHUD();
     }
@@ -1981,6 +2417,8 @@ class GameEngine3D {
     clearLevel() {
         if (this.roadMesh) { this.disposeHierarchy(this.roadMesh); this.scene.remove(this.roadMesh); this.roadMesh = null; }
         if (this.centerStrip) { this.disposeHierarchy(this.centerStrip); this.scene.remove(this.centerStrip); this.centerStrip = null; }
+        if (this.curbs) { this.disposeHierarchy(this.curbs); this.scene.remove(this.curbs); this.curbs = null; }
+        if (this.laneDashes) { this.disposeHierarchy(this.laneDashes); this.scene.remove(this.laneDashes); this.laneDashes = null; }
         if (this.sidewalks) { this.disposeHierarchy(this.sidewalks); this.scene.remove(this.sidewalks); this.sidewalks = null; }
         if (this.groundMesh) { this.disposeHierarchy(this.groundMesh); this.scene.remove(this.groundMesh); this.groundMesh = null; }
         if (this.finishGate) { this.disposeHierarchy(this.finishGate); this.scene.remove(this.finishGate); this.finishGate = null; }
@@ -1997,6 +2435,15 @@ class GameEngine3D {
 
         this.puddles.forEach(p => { this.disposeHierarchy(p.mesh); this.scene.remove(p.mesh); });
         this.puddles = [];
+
+        this.cones.forEach(c => { this.disposeHierarchy(c.mesh); this.scene.remove(c.mesh); });
+        this.cones = [];
+
+        this.barriers.forEach(b => { this.disposeHierarchy(b.mesh); this.scene.remove(b.mesh); });
+        this.barriers = [];
+
+        this.oilSlicks.forEach(o => { this.disposeHierarchy(o.mesh); this.scene.remove(o.mesh); });
+        this.oilSlicks = [];
 
         while (this.decorGroup.children.length > 0) {
             const child = this.decorGroup.children[0];
@@ -2209,9 +2656,15 @@ class GameEngine3D {
             targetLateralSpeed = maxSteerSpeed;
         }
 
-        // Yonboshga siljishda g'ildirak/panja ishqalanishi
-        p.vd += (targetLateralSpeed - p.vd) * 0.18;
+        // Yonboshga siljishda g'ildirak/panja ishqalanishi (Moy dog'ida kamayadi)
+        const friction = (p.slipTimer > 0 ? 0.04 : 0.18);
+        p.vd += (targetLateralSpeed - p.vd) * friction;
         p.d += p.vd;
+
+        if (p.slipTimer > 0) {
+            p.slipTimer--;
+            p.roll += Math.sin(p.slipTimer * 0.45) * 0.12;
+        }
 
         // Chegaralar (Yo'l kengligi 12m, bordyurlar d = ±5.4m)
         if (p.d < -5.4) { p.d = -5.4; p.vd = 0; }
@@ -2265,6 +2718,14 @@ class GameEngine3D {
         this.catObj.mesh.position.copy(catWorldPos);
         this.catObj.mesh.rotation.set(p.pitch, p.heading, p.roll);
         this.catObj.mesh.scale.set(p.squashXZ, p.squashY, p.squashXZ);
+
+        // Dinamik yumshoq kontakt soya (sakrash balandligiga qarab)
+        if (this.catObj.shadow) {
+            const shadowScale = Math.max(0.35, 1.0 - p.y * 0.35);
+            this.catObj.shadow.scale.set(shadowScale, shadowScale, 1);
+            this.catObj.shadow.material.opacity = Math.max(0.08, 0.35 - p.y * 0.15);
+            this.catObj.shadow.position.y = -p.y + 0.02;
+        }
 
         // Oyoqlar yugurish animatsiyasi (sirpanishsiz, haqiqiy bosib o'tilgan masofaga bog'liq)
         const groundSpeed = Math.hypot(p.vs, p.vd);
@@ -2355,6 +2816,59 @@ class GameEngine3D {
                         p.shieldTimer = 300;
                         this.sound.playStar();
                     }
+                }
+            }
+        }
+
+        // 6.5. YO'L KONUSLARI (Traffic Cones - Sakrab o'tish mumkin)
+        for (let cone of this.cones) {
+            const ds = Math.abs(p.s - cone.s);
+            const dd = Math.abs(p.d - cone.d);
+            if (ds < 1.1 && dd < 0.95 && this.state === "PLAYING") {
+                if (p.y > 0.52) {
+                    if (!cone.jumped) {
+                        cone.jumped = true;
+                        this.score += 5;
+                    }
+                } else if (!cone.hit) {
+                    cone.hit = true;
+                    p.vs = Math.max(0.12, p.vs * 0.65);
+                    p.stamina = Math.max(0, p.stamina - 15);
+                    cone.mesh.rotation.z = 1.1;
+                    cone.mesh.position.y = 0.2;
+                    this.sound.playHit();
+                }
+            }
+        }
+
+        // 6.6. YO'L TO'SIQLARI (Road Barriers - Butun polosa to'silgan)
+        for (let barrier of this.barriers) {
+            const ds = Math.abs(p.s - barrier.s);
+            const dd = Math.abs(p.d - barrier.d);
+            if (ds < 1.3 && dd < 1.4 && p.y < 1.1 && this.state === "PLAYING") {
+                if (!p.hasShield) {
+                    const hit = this.takeHit();
+                    if (hit) {
+                        this.lives--;
+                        if (this.lives <= 0) {
+                            if (this.ui.gameoverDistVal) this.ui.gameoverDistVal.textContent = Math.floor(p.s);
+                            this.sound.playGameOver();
+                            this.setGameState("GAME_OVER");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6.7. MOY DOG'LARI (Oil Slicks - Sirpanish)
+        for (let slick of this.oilSlicks) {
+            const ds = Math.abs(p.s - slick.s);
+            const dd = Math.abs(p.d - slick.d);
+            if (ds < 1.5 && dd < 1.3 && p.y < 0.3) {
+                if (p.slipTimer <= 0) {
+                    p.slipTimer = 80;
+                    this.sound.playSlip();
                 }
             }
         }
@@ -2459,6 +2973,20 @@ class GameEngine3D {
         for (let car of this.cars) {
             car.s -= car.speed; // Qarama-qarshi oqimda silliq harakatlanadi
             car.wheels.forEach(w => w.rotation.x += 0.22);
+
+            // POLICE CAR: Sirena va stroboskop chiroqlar
+            if (car.isPolice) {
+                car.strobePhase = (car.strobePhase || 0) + 1;
+                const isRed = Math.floor(car.strobePhase / 5) % 2 === 0;
+                if (car.strobes) {
+                    car.strobes.red.material.color.setHex(isRed ? 0xff0000 : 0x220000);
+                    car.strobes.blue.material.color.setHex(!isRed ? 0x0088ff : 0x001133);
+                }
+                const distAheadPolice = car.s - p.s;
+                if (distAheadPolice > 0 && distAheadPolice < 55 && car.strobePhase % 45 === 0) {
+                    this.sound.playSiren();
+                }
+            }
 
             // Mushuk o'sha polosada kelayotgan bo'lsa mashina signal chaladi
             const inSameLane = Math.abs(p.d - car.d) < 1.6;

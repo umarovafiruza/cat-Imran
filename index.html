@@ -65,6 +65,13 @@
             </div>
         </header>
 
+        <!-- Bosqich Kirish Animatsiyasi (Level Intro Card) -->
+        <div id="level-intro-card" class="level-intro-card hidden">
+            <div class="intro-badge">🏁 DARAJA BOSHLANDI</div>
+            <div class="intro-level-title" id="intro-level-title">1-BOSQICH: QUYOSHLI SHAHARCHA</div>
+            <div class="intro-level-sub" id="intro-level-sub">Masofa: 400m | Tinch trassa</div>
+        </div>
+
         <!-- Mobil Burger Sozlamalar Menyu Drawer -->
         <div id="burger-drawer" class="burger-drawer hidden">
             <div class="drawer-backdrop" id="drawer-backdrop"></div>
@@ -102,6 +109,10 @@
                     </div>
 
                     <div class="drawer-actions-list">
+                        <button id="drawer-level-select-btn" class="drawer-btn">
+                            <span>🗺️</span>
+                            <span>Bosqichni Tanlash (1 - 10)</span>
+                        </button>
                         <button id="drawer-sound-btn" class="drawer-btn">
                             <span id="drawer-sound-icon">🔊</span>
                             <span>Ovoz: <b id="drawer-sound-status">Yoqilgan</b></span>
@@ -156,6 +167,25 @@
                     <button id="start-btn" class="action-btn secondary-start-btn">
                         🎮 Boshidan Boshlash (1-bosqich)
                     </button>
+                    <button id="open-level-select-btn" class="action-btn level-select-trigger-btn">
+                        🗺️ Bosqichlar Ro'yxati (1 - 10)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bosqichlarni Tanlash Modali (Level Select Modal) -->
+        <div id="level-select-modal" class="modal-screen hidden">
+            <div class="modal-card level-select-modal-card">
+                <div class="modal-header-compact">
+                    <h2>🗺️ 10 Ta Bosqichlar Ro'yxati</h2>
+                    <p>O'zingizga ma'qul bo'lgan bosqichni tanlab to'g'ridan-to'g'ri o'ynang</p>
+                </div>
+                <div class="level-grid" id="level-grid">
+                    <!-- Dinamik ravishda 10 ta bosqich kartochkalari yaratiladi -->
+                </div>
+                <div class="btn-stack" style="margin-top:14px;">
+                    <button id="close-level-select-btn" class="alt-btn">Orqaga ↩️</button>
                 </div>
             </div>
         </div>
